@@ -3,7 +3,7 @@
    Connected directly to SQLite Database via REST API
 =================================================== */
 
-const ADMIN_PIN_DEFAULT = '2026';
+const ADMIN_PIN_DEFAULT = '11011';
 let currentPin = sessionStorage.getItem('srishty_pin') || '';
 let currentFilter = 'pending'; // 'pending' | 'approved' | 'all'
 let allAttendees = [];
