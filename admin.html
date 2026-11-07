@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Srishty's Admin Portal — December to Remember</title>
+  
+  <meta name="theme-color" content="#72101F" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            wine: {
+              950: '#2A050B',
+              900: '#3E0811',
+              800: '#560B17',
+              700: '#72101F',
+              600: '#8E1729',
+              100: '#FBECEE',
+              50: '#FDF5F6',
+            },
+            champagne: {
+              50: '#FDFBF7',
+              100: '#F8F2E8',
+              200: '#EFE2D0',
+              300: '#E3CFB4',
+            },
+            gold: {
+              300: '#F2D785',
+              400: '#E6C35C',
+              500: '#CCA028',
+              600: '#A67F19',
+            }
+          },
+          fontFamily: {
+            serif: ['"Playfair Display"', 'Georgia', 'serif'],
+            display: ['"Cinzel"', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-[#1a0508] text-[#2c1316] antialiased min-h-screen">
+
+  <div class="max-w-2xl mx-auto min-h-screen bg-[#FDFBF7] shadow-2xl relative flex flex-col border-x border-[#eddccb]">
+    
+    <!-- Admin Top Header -->
+    <header class="sticky top-0 z-40 bg-gradient-to-r from-wine-950 via-wine-900 to-wine-950 text-white px-5 py-3.5 flex items-center justify-between shadow-md border-b border-gold-500/30">
+      <div class="flex items-center space-x-3">
+        <span class="w-9 h-9 rounded-full bg-gold-500/20 text-gold-300 border border-gold-400/40 flex items-center justify-center text-lg">
+          👑
+        </span>
+        <div>
+          <h1 class="font-serif font-black text-sm sm:text-base tracking-wide text-white leading-tight">Srishty's Organizer Admin</h1>
+          <p class="text-[10px] text-wine-200 uppercase tracking-widest font-semibold">SQLite Database Connected • Live Sync</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <a href="/" target="_blank" class="text-xs bg-white/10 hover:bg-white/20 text-wine-100 px-2.5 py-1.5 rounded-full transition flex items-center gap-1 border border-white/10" title="Open Student Registration View">
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">Student View</span>
+        </a>
+        <button id="lockBtn" class="text-xs bg-wine-800 hover:bg-wine-700 text-gold-300 px-2.5 py-1.5 rounded-full transition flex items-center gap-1 border border-gold-500/30">
+          <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+          <span>Lock</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN BODY -->
+    <main class="flex-1 p-4 sm:p-5 space-y-4">
+
+      <!-- AUTH PIN VIEW (When locked) -->
+      <div id="authContainer" class="py-16 text-center space-y-4">
+        <div class="w-16 h-16 rounded-full bg-wine-100 text-wine-800 mx-auto flex items-center justify-center text-3xl border border-wine-300 shadow-sm">
+          🔒
+        </div>
+        <div class="space-y-1">
+          <h2 class="font-serif font-bold text-wine-900 text-lg">Srishty's Organizer Login</h2>
+          <p class="text-xs text-zinc-600 max-w-xs mx-auto">
+            Enter your admin PIN to access the SQLite registration database.
+          </p>
+        </div>
+        <div class="max-w-xs mx-auto space-y-2.5">
+          <input
+            type="password"
+            id="pinInput"
+            placeholder="Enter PIN (2026)"
+            class="w-full text-center py-2.5 px-3 border border-zinc-300 rounded-xl font-mono text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-wine-700 bg-white"
+          />
+          <button
+            id="loginBtn"
+            class="w-full py-3 bg-wine-700 hover:bg-wine-800 text-white font-serif font-bold text-sm rounded-xl shadow-md transition active:scale-95 flex items-center justify-center gap-1.5"
+          >
+            <i data-lucide="key" class="w-4 h-4"></i>
+            <span>Unlock Admin Dashboard</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- DASHBOARD VIEW (When unlocked) -->
+      <div id="dashboardContainer" class="hidden space-y-4">
+        
+        <!-- Live Metrics Cards -->
+        <div class="grid grid-cols-4 gap-2 text-center">
+          <div class="p-3 bg-white rounded-2xl border border-[#e5d4c2] shadow-xs">
+            <span class="block text-[9px] uppercase font-bold text-zinc-500">PENDING</span>
+            <span id="metricPending" class="text-xl font-serif font-black text-amber-600">0</span>
+          </div>
+          <div class="p-3 bg-white rounded-2xl border border-[#e5d4c2] shadow-xs">
+            <span class="block text-[9px] uppercase font-bold text-zinc-500">APPROVED</span>
+            <span id="metricApproved" class="text-xl font-serif font-black text-emerald-600">0</span>
+          </div>
+          <div class="p-3 bg-white rounded-2xl border border-[#e5d4c2] shadow-xs">
+            <span class="block text-[9px] uppercase font-bold text-zinc-500">HEADCOUNT</span>
+            <span id="metricHeadcount" class="text-xl font-serif font-black text-wine-900">0</span>
+          </div>
+          <div class="p-3 bg-white rounded-2xl border border-[#e5d4c2] shadow-xs">
+            <span class="block text-[9px] uppercase font-bold text-zinc-500">COLLECTED</span>
+            <span id="metricRevenue" class="text-xs sm:text-sm font-serif font-black text-emerald-800 truncate block mt-1">₹0</span>
+          </div>
+        </div>
+
+        <!-- Filter & Search Bar -->
+        <div class="space-y-2">
+          <!-- Filter Switcher -->
+          <div class="flex p-1 bg-[#ede0d2] rounded-xl text-xs font-bold border border-[#dfcebc]">
+            <button id="filterPendingBtn" class="flex-1 py-1.5 rounded-lg bg-wine-700 text-white shadow-xs transition">
+              Pending Approvals (<span id="filterPendingCount">0</span>)
+            </button>
+            <button id="filterApprovedBtn" class="flex-1 py-1.5 rounded-lg text-wine-900 transition">
+              Approved Passes (<span id="filterApprovedCount">0</span>)
+            </button>
+            <button id="filterAllBtn" class="flex-1 py-1.5 rounded-lg text-wine-900 transition">
+              All (<span id="filterAllCount">0</span>)
+            </button>
+          </div>
+
+          <!-- Search Input + Refresh Button -->
+          <div class="flex items-center gap-2">
+            <div class="relative flex-1">
+              <input
+                type="text"
+                id="searchInput"
+                placeholder="Search by student name, companion, or UTR..."
+                class="w-full pl-8 pr-3 py-2 text-xs bg-white border border-[#dfcebc] rounded-xl focus:outline-none focus:ring-2 focus:ring-wine-700 shadow-xs"
+              />
+              <i data-lucide="search" class="w-3.5 h-3.5 text-zinc-400 absolute left-2.5 top-2.5"></i>
+            </div>
+            <button id="manualRefreshBtn" class="p-2 bg-white hover:bg-zinc-50 text-wine-800 rounded-xl border border-[#dfcebc] shadow-xs transition active:scale-95" title="Refresh Database">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Registrations Cards List -->
+        <div id="attendeesListContainer" class="space-y-3">
+          <!-- Dynamically populated from SQLite via API -->
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#ede0d2] px-5 py-3 border-t border-[#dfcebc] text-[11px] text-wine-800 flex items-center justify-between font-medium">
+      <span>UPI Receiver: <strong>9592982012@fam</strong></span>
+      <span>Pyramid Lounge • Ludhiana</span>
+    </footer>
+
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
