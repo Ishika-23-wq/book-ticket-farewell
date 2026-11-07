@@ -79,7 +79,7 @@
     
     <!-- Top Navigation Bar -->
     <header class="sticky top-0 z-40 bg-[#FDFBF7]/95 backdrop-blur-md border-b border-[#ebd8c5] px-4 py-3 flex items-center justify-between shadow-sm">
-      <div class="flex items-center space-x-2 select-none" title="December to Remember">
+      <div id="decemberHeaderBrand" class="december-admin-trigger flex items-center space-x-2 select-none cursor-pointer" title="December to Remember">
         <span class="w-8 h-8 rounded-full bg-wine-700 text-gold-300 flex items-center justify-center font-serif text-sm font-bold shadow-inner">
           ✦
         </span>
@@ -136,7 +136,7 @@
         </div>
 
         <!-- Main Title (Poster Replica) -->
-        <div class="relative py-1">
+        <div id="decemberHeroTitle" class="december-admin-trigger relative py-1 select-none cursor-pointer" title="December to Remember">
           <div class="font-cursive text-5xl md:text-6xl text-wine-800 drop-shadow-xs -mb-3 tracking-normal">
             December to
           </div>
@@ -193,7 +193,7 @@
 
         <!-- Dress Code & Tagline -->
         <div class="mt-3 flex items-center justify-between text-xs px-2">
-          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wine-100/80 text-wine-900 border border-wine-200">
+          <div id="decemberThemeBadge" class="december-admin-trigger inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wine-100/80 text-wine-900 border border-wine-200 select-none cursor-pointer" title="Western Theme">
             <span class="text-[10px] uppercase font-bold text-wine-600">Dress Code:</span>
             <span class="font-serif italic font-bold">Western Theme ✨</span>
           </div>
@@ -507,22 +507,6 @@
                       <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>
                       <span id="amountErrorText">Amount must match the exact total for your selected passes.</span>
                     </p>
-                  </div
-                        id="paymentAmount"
-                        required
-                        value="2000"
-                        min="2000"
-                        max="2000"
-                        step="1"
-                        placeholder="2000"
-                        class="w-full pl-8 pr-3 py-2.5 bg-champagne-50/70 border border-[#dbcaa7] rounded-xl text-sm font-bold text-wine-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-wine-600 transition"
-                      />
-                    </div>
-                    <!-- Inline validation error if amount != 2000 -->
-                    <p id="amountErrorMsg" class="hidden text-[11px] text-rose-700 font-bold mt-1.5 p-2 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-1.5">
-                      <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>
-                      <span>Amount must be exactly ₹2,000. Values less or more than ₹2,000 are not allowed to submit.</span>
-                    </p>
                   </div>
 
                   <!-- UPI UTR / Transaction ID Input (Mandatory) -->
@@ -579,7 +563,7 @@
                 <strong class="block text-[11px] text-wine-900 font-bold mb-0.5">📍 Full Venue Address:</strong>
                 <p class="text-[11px] leading-relaxed">Pyramid Lounge, 4th Floor, Rudra Tower, Sat Paul Mittal Road, F-Block, Sarabha Nagar, Ludhiana</p>
               </div>
-              <div class="bg-white/80 p-2.5 rounded-lg border border-[#eeddcb]">
+              <div class="december-admin-trigger bg-white/80 p-2.5 rounded-lg border border-[#eeddcb] select-none cursor-pointer" title="Western Theme">
                 <strong class="block text-[11px] text-wine-900 font-bold mb-0.5">👔 Dress Code:</strong>
                 <p class="text-[11px] leading-relaxed">Western Theme (Suits, Blazers, Evening Dresses, Tuxedos, Chic Western Gowns)</p>
               </div>
@@ -798,7 +782,7 @@
                 </div>
 
                 <div class="flex items-start justify-between">
-                  <div>
+                  <div class="december-admin-trigger cursor-pointer select-none" title="December to Remember">
                     <span class="inline-block text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-300 border border-gold-400/30 font-semibold mb-1">
                       OFFICIAL FAREWELL PASS
                     </span>

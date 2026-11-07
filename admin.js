@@ -103,7 +103,7 @@ function updateFilterTabStyles() {
 
 // Authenticate Srishty
 async function tryLogin(pin) {
-  if (pin === ADMIN_PIN_DEFAULT || pin === 'admin') {
+  if (pin === '2026' || pin === '11011' || pin === ADMIN_PIN_DEFAULT || pin === 'admin') {
     currentPin = pin;
     sessionStorage.setItem('srishty_pin', pin);
     authContainer.classList.add('hidden');

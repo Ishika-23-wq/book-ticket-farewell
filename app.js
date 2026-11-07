@@ -130,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
   updatePassQuantityUI(); // Inits dynamic amount-locked QR code immediately
   loadSavedTicket(); // Checks SQLite DB for live status of existing registration
+  initDecemberTripleTapAdmin(); // Secret triple-tap on December theme lands on admin page
 });
 
 // Setup Event Listeners
@@ -924,4 +925,86 @@ function initCountdown() {
 
   update();
   setInterval(update, 1000);
+}
+
+// ==============================================
+// SECRET ADMIN TRIPLE-TAP GESTURE
+// Tap 3 times on "December to Remember" or "Theme"
+// lands directly on the Admin Page (admin.html)
+// ==============================================
+function initDecemberTripleTapAdmin() {
+  // Check URL shortcut (?admin, ?srishty, #admin)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('admin') || urlParams.has('srishty') || window.location.hash === '#admin') {
+    window.location.href = 'admin.html';
+    return;
+  }
+
+  let tapCount = 0;
+  let lastTapTime = 0;
+  let resetTimer = null;
+
+  function handleTap(e) {
+    const now = Date.now();
+
+    // Debounce duplicate synthetic events (e.g. touchend followed by click within 40ms)
+    if (now - lastTapTime < 40) {
+      return;
+    }
+
+    // Reset tap counter if gap between taps exceeds 1500ms
+    if (now - lastTapTime > 1500) {
+      tapCount = 0;
+    }
+
+    lastTapTime = now;
+    tapCount++;
+
+    if (resetTimer) {
+      clearTimeout(resetTimer);
+    }
+
+    resetTimer = setTimeout(() => {
+      tapCount = 0;
+    }, 1500);
+
+    if (tapCount >= 3) {
+      tapCount = 0;
+      clearTimeout(resetTimer);
+
+      showAdminToast();
+
+      // Haptic feedback if supported on mobile devices
+      if (typeof navigator.vibrate === 'function') {
+        try { navigator.vibrate([40, 60, 40]); } catch (_) {}
+      }
+
+      // Smooth landing to the admin page
+      setTimeout(() => {
+        window.location.href = 'admin.html';
+      }, 250);
+    }
+  }
+
+  function showAdminToast() {
+    let toast = document.getElementById('adminLandingToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'adminLandingToast';
+      toast.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-wine-900 text-gold-300 border border-gold-400 px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 text-xs font-serif font-bold transition-all';
+      toast.innerHTML = '<span>👑</span><span>Heading to Srishty\'s Admin Portal...</span>';
+      document.body.appendChild(toast);
+    } else {
+      toast.classList.remove('hidden');
+    }
+  }
+
+  const triggerElements = document.querySelectorAll(
+    '.december-admin-trigger, #decemberHeaderBrand, #decemberHeroTitle, #decemberThemeBadge'
+  );
+
+  triggerElements.forEach(el => {
+    el.addEventListener('click', handleTap);
+    el.addEventListener('touchend', handleTap, { passive: true });
+  });
 }

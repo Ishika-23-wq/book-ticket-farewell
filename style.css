@@ -105,3 +105,16 @@ html {
   background: #cbb49d;
   border-radius: 999px;
 }
+
+/* Secret Admin Triple-Tap Trigger */
+.december-admin-trigger {
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.december-admin-trigger:active {
+  opacity: 0.92;
+}
