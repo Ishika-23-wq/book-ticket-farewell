@@ -9,7 +9,7 @@ const path = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
 
 const PORT = process.env.PORT || 3000;
-const ADMIN_PIN = '2026';
+const ADMIN_PIN = '11011';
 const DATA_DIR = path.join(__dirname, 'data');
 
 // In Vercel Serverless environment, filesystem is read-only except /tmp.
