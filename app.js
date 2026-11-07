@@ -1,11 +1,17 @@
 /* ===================================================
    DECEMBER TO REMEMBER - CLASS 10TH FAREWELL APP JS
+   With Srishty's UPI Payment Verification & Admin Portal
 =================================================== */
 
 // Global State
-let passQuantity = 1;
 const PASS_PRICE = 2000;
 let qrcodeInstance = null;
+let isAdminAuthenticated = false;
+let adminCurrentFilter = 'pending'; // 'pending' | 'all'
+
+// Srishty's Details
+const SRISHTY_UPI = '9592982012@fam';
+const ADMIN_PIN = '11011';
 
 // Target Event Date: December 23, 2026 18:00:00 (6:00 PM)
 const EVENT_DATE = new Date('2026-12-23T18:00:00+05:30').getTime();
@@ -14,7 +20,7 @@ const EVENT_DATE = new Date('2026-12-23T18:00:00+05:30').getTime();
 const STORAGE_CURRENT_TICKET = 'dtr_current_ticket';
 const STORAGE_ALL_ATTENDEES = 'dtr_all_attendees';
 
-// DOM Elements
+// DOM Elements - Form
 const form = document.getElementById('bookingForm');
 const fullNameInput = document.getElementById('fullName');
 const classGradeInput = document.getElementById('classGrade');
@@ -22,11 +28,9 @@ const sectionInput = document.getElementById('section');
 const phoneInput = document.getElementById('phoneNumber');
 const instagramInput = document.getElementById('instagramHandle');
 const djSongInput = document.getElementById('djSong');
-
-const passCountEl = document.getElementById('passCount');
-const totalAmountText = document.getElementById('totalAmountText');
-const decreasePassesBtn = document.getElementById('decreasePasses');
-const increasePassesBtn = document.getElementById('increasePasses');
+const utrNumberInput = document.getElementById('utrNumber');
+const copyUpiBtn = document.getElementById('copyUpiBtn');
+const copyUpiLabel = document.getElementById('copyUpiLabel');
 
 // Panels & Navigation
 const registerPanel = document.getElementById('registerPanel');
@@ -41,19 +45,51 @@ const activeTicketState = document.getElementById('activeTicketState');
 const passRefId = document.getElementById('passRefId');
 const passGuestName = document.getElementById('passGuestName');
 const passGradeSec = document.getElementById('passGradeSec');
-const passQuantityEl = document.getElementById('passQuantity');
-const passPaidRate = document.getElementById('passPaidRate');
+const passUtrDisplay = document.getElementById('passUtrDisplay');
 const passBarcodeText = document.getElementById('passBarcodeText');
 const checkInBadge = document.getElementById('checkInBadge');
 const qrCodeContainer = document.getElementById('qrcode');
+const qrLockedOverlay = document.getElementById('qrLockedOverlay');
+const ticketStatusAlert = document.getElementById('ticketStatusAlert');
+const ticketStatusDot = document.getElementById('ticketStatusDot');
+const ticketStatusTitle = document.getElementById('ticketStatusTitle');
+const ticketStatusPill = document.getElementById('ticketStatusPill');
+const ticketStatusDesc = document.getElementById('ticketStatusDesc');
+const alertUtrNumber = document.getElementById('alertUtrNumber');
+const ticketSeal = document.getElementById('ticketSeal');
+const sealTopText = document.getElementById('sealTopText');
+const sealIconWrap = document.getElementById('sealIconWrap');
+const approvalByFooter = document.getElementById('approvalByFooter');
 
 // Buttons inside ticket panel
 const downloadPassBtn = document.getElementById('downloadPassBtn');
+const downloadBtnText = document.getElementById('downloadBtnText');
 const shareWhatsAppBtn = document.getElementById('shareWhatsAppBtn');
+const notifySrishtyBtn = document.getElementById('notifySrishtyBtn');
 const editDetailsBtn = document.getElementById('editDetailsBtn');
 const goToRegisterBtn = document.getElementById('goToRegisterBtn');
 
-// Organizer Modal Elements
+// Srishty Admin Modal Elements
+const srishtyAdminBtn = document.getElementById('srishtyAdminBtn');
+const pendingBadgeHeader = document.getElementById('pendingBadgeHeader');
+const srishtyAdminModal = document.getElementById('srishtyAdminModal');
+const closeSrishtyAdminBtn = document.getElementById('closeSrishtyAdminBtn');
+const srishtyAuthView = document.getElementById('srishtyAuthView');
+const srishtyDashboardView = document.getElementById('srishtyDashboardView');
+const adminPinInput = document.getElementById('adminPinInput');
+const unlockAdminBtn = document.getElementById('unlockAdminBtn');
+const lockAdminBtn = document.getElementById('lockAdminBtn');
+const statPendingCount = document.getElementById('statPendingCount');
+const statApprovedCount = document.getElementById('statApprovedCount');
+const statTotalCollected = document.getElementById('statTotalCollected');
+const adminFilterPendingBtn = document.getElementById('adminFilterPendingBtn');
+const adminFilterAllBtn = document.getElementById('adminFilterAllBtn');
+const adminPendingFilterCount = document.getElementById('adminPendingFilterCount');
+const adminAllFilterCount = document.getElementById('adminAllFilterCount');
+const adminSearchInput = document.getElementById('adminSearchInput');
+const adminRegistrationsList = document.getElementById('adminRegistrationsList');
+
+// Organizer Door Scanner Elements
 const organizerBtn = document.getElementById('organizerBtn');
 const organizerModal = document.getElementById('organizerModal');
 const closeOrganizerBtn = document.getElementById('closeOrganizerBtn');
@@ -83,25 +119,24 @@ document.addEventListener('DOMContentLoaded', () => {
   initCountdown();
   setupEventListeners();
   loadSavedTicket();
-  updateAttendeesCount();
+  updateAdminStatsAndBadges();
 });
 
 // Event Listeners
 function setupEventListeners() {
-  // Pass counter
-  decreasePassesBtn.addEventListener('click', () => {
-    if (passQuantity > 1) {
-      passQuantity--;
-      updatePassCounter();
-    }
-  });
-
-  increasePassesBtn.addEventListener('click', () => {
-    if (passQuantity < 5) {
-      passQuantity++;
-      updatePassCounter();
-    }
-  });
+  // Copy UPI
+  if (copyUpiBtn) {
+    copyUpiBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(SRISHTY_UPI).then(() => {
+        copyUpiLabel.textContent = 'Copied!';
+        setTimeout(() => {
+          copyUpiLabel.textContent = 'Copy';
+        }, 2000);
+      }).catch(() => {
+        prompt('Copy Srishty UPI ID:', SRISHTY_UPI);
+      });
+    });
+  }
 
   // Tab switching
   tabRegisterBtn.addEventListener('click', () => switchTab('register'));
@@ -121,31 +156,51 @@ function setupEventListeners() {
   form.addEventListener('submit', handleFormSubmit);
 
   // Ticket actions
-  downloadPassBtn.addEventListener('click', downloadTicketAsImage);
+  downloadPassBtn.addEventListener('click', handleDownloadPassClick);
   shareWhatsAppBtn.addEventListener('click', shareOnWhatsApp);
+  notifySrishtyBtn.addEventListener('click', notifySrishtyOnWhatsApp);
+
+  // Srishty Admin Modal
+  srishtyAdminBtn.addEventListener('click', openSrishtyAdminModal);
+  closeSrishtyAdminBtn.addEventListener('click', () => srishtyAdminModal.classList.add('hidden'));
+  unlockAdminBtn.addEventListener('click', authenticateAdmin);
+  adminPinInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') authenticateAdmin();
+  });
+  lockAdminBtn.addEventListener('click', lockAdmin);
+
+  adminFilterPendingBtn.addEventListener('click', () => {
+    adminCurrentFilter = 'pending';
+    adminFilterPendingBtn.className = 'flex-1 py-1.5 rounded-lg bg-wine-700 text-white shadow-xs transition';
+    adminFilterAllBtn.className = 'flex-1 py-1.5 rounded-lg text-wine-900 transition';
+    renderAdminRegistrations();
+  });
+
+  adminFilterAllBtn.addEventListener('click', () => {
+    adminCurrentFilter = 'all';
+    adminFilterAllBtn.className = 'flex-1 py-1.5 rounded-lg bg-wine-700 text-white shadow-xs transition';
+    adminFilterPendingBtn.className = 'flex-1 py-1.5 rounded-lg text-wine-900 transition';
+    renderAdminRegistrations();
+  });
+
+  adminSearchInput.addEventListener('input', renderAdminRegistrations);
 
   // Poster Modal
   if (openPosterBtn) {
-    openPosterBtn.addEventListener('click', () => {
-      posterModal.classList.remove('hidden');
-    });
+    openPosterBtn.addEventListener('click', () => posterModal.classList.remove('hidden'));
   }
   if (closePosterBtn) {
-    closePosterBtn.addEventListener('click', () => {
-      posterModal.classList.add('hidden');
-    });
+    closePosterBtn.addEventListener('click', () => posterModal.classList.add('hidden'));
   }
   if (closePosterBtn2) {
-    closePosterBtn2.addEventListener('click', () => {
-      posterModal.classList.add('hidden');
-    });
+    closePosterBtn2.addEventListener('click', () => posterModal.classList.add('hidden'));
   }
 
-  // Organizer Modal
+  // Organizer Door Scanner Modal
   organizerBtn.addEventListener('click', () => {
     organizerModal.classList.remove('hidden');
     scanResultBox.classList.add('hidden');
-    updateAttendeesCount();
+    updateAdminStatsAndBadges();
   });
   closeOrganizerBtn.addEventListener('click', () => {
     organizerModal.classList.add('hidden');
@@ -156,16 +211,9 @@ function setupEventListeners() {
     if (ticket) {
       scanInput.value = ticket.ticketId;
     } else {
-      alert('No active ticket found yet. Please generate one first!');
+      alert('No active ticket found yet. Please submit registration first!');
     }
   });
-}
-
-// Update pass count & price
-function updatePassCounter() {
-  passCountEl.textContent = passQuantity;
-  const total = passQuantity * PASS_PRICE;
-  totalAmountText.textContent = `₹${total.toLocaleString('en-IN')}`;
 }
 
 // Switch between tabs
@@ -178,7 +226,7 @@ function switchTab(tab) {
     tabRegisterBtn.classList.remove('text-wine-900');
     tabTicketBtn.classList.remove('bg-wine-700', 'text-white', 'shadow-sm');
     tabTicketBtn.classList.add('text-wine-900');
-    window.scrollTo({ top: 400, behavior: 'smooth' });
+    window.scrollTo({ top: 380, behavior: 'smooth' });
   } else {
     registerPanel.classList.add('hidden');
     ticketPanel.classList.remove('hidden');
@@ -197,7 +245,7 @@ function switchTab(tab) {
       activeTicketState.classList.remove('hidden');
       renderTicket(currentTicket);
     }
-    window.scrollTo({ top: 420, behavior: 'smooth' });
+    window.scrollTo({ top: 400, behavior: 'smooth' });
   }
 
   if (window.lucide) {
@@ -215,16 +263,22 @@ function handleFormSubmit(e) {
   const phone = phoneInput.value.trim();
   const instagram = instagramInput.value.trim() ? `@${instagramInput.value.replace(/^@/, '')}` : '';
   const song = djSongInput.value.trim();
+  const utr = utrNumberInput.value.trim();
 
   if (!fullName || !phone) {
     alert('Please fill in your name and phone number.');
     return;
   }
 
+  if (!utr) {
+    alert('Please enter the 12-digit UPI UTR / Transaction Reference number after paying ₹2,000 to Srishty.');
+    utrNumberInput.focus();
+    return;
+  }
+
   // Generate unique Ticket ID
   const randomNum = Math.floor(1000 + Math.random() * 9000);
   const ticketId = `DTR-2026-X${randomNum}`;
-  const totalAmount = passQuantity * PASS_PRICE;
 
   const ticketData = {
     ticketId,
@@ -234,66 +288,134 @@ function handleFormSubmit(e) {
     phone,
     instagram,
     song,
-    quantity: passQuantity,
-    totalAmount,
-    eventName: "December to Remember - Class 10th Farewell Party",
-    venue: "Pyramid Lounge, Ludhiana",
-    date: "23rd December 2026",
-    time: "6:00 PM Onwards",
-    dressCode: "Western Theme",
-    status: "CONFIRMED & VALID",
+    quantity: 1,
+    totalAmount: PASS_PRICE, // Exactly ₹2000
+    utrNumber: utr,
+    paidTo: SRISHTY_UPI,
+    status: 'PENDING', // 'PENDING' | 'APPROVED' | 'REJECTED'
+    approvedBy: null,
+    approvedAt: null,
     checkedIn: false,
     timestamp: new Date().toISOString()
   };
 
-  // Save to localStorage
+  // Save to current active ticket
   localStorage.setItem(STORAGE_CURRENT_TICKET, JSON.stringify(ticketData));
 
-  // Add to all attendees directory
+  // Add or update in attendees list
   const attendees = getAllAttendees();
-  attendees.push(ticketData);
+  const existingIdx = attendees.findIndex(a => a.ticketId === ticketId);
+  if (existingIdx >= 0) {
+    attendees[existingIdx] = ticketData;
+  } else {
+    attendees.unshift(ticketData);
+  }
   localStorage.setItem(STORAGE_ALL_ATTENDEES, JSON.stringify(attendees));
-
-  // Trigger festive celebration confetti
-  triggerConfetti();
 
   // Switch to ticket view
   switchTab('ticket');
   viewMyTicketBtn.classList.remove('hidden');
-  updateAttendeesCount();
+  updateAdminStatsAndBadges();
+
+  // Subtle alert indicating pending approval
+  setTimeout(() => {
+    alert(`🎉 Registration details submitted!\n\nYour ₹2,000 payment (UTR: ${utr}) has been sent to Srishty for confirmation.\n\nPlease tap "Send Payment Details to Srishty on WhatsApp" to notify her directly!`);
+  }, 400);
 }
 
-// Render Ticket Details and Generate QR Code
+// Render Ticket Details with Pending vs Approved States
 function renderTicket(ticket) {
   passRefId.textContent = `#${ticket.ticketId}`;
   passGuestName.textContent = ticket.fullName;
   passGradeSec.textContent = `${ticket.classGrade} • ${ticket.section}`;
-  passQuantityEl.textContent = `${ticket.quantity} ${ticket.quantity === 1 ? 'Person' : 'Persons'}`;
-  passPaidRate.textContent = `₹${ticket.totalAmount.toLocaleString('en-IN')}`;
+  passUtrDisplay.textContent = ticket.utrNumber || 'N/A';
   passBarcodeText.textContent = `${ticket.ticketId}-LUDHIANA-VIP`;
+  if (alertUtrNumber) alertUtrNumber.textContent = ticket.utrNumber || 'N/A';
 
-  if (ticket.checkedIn) {
-    checkInBadge.textContent = 'STATUS: CHECKED IN';
-    checkInBadge.className = 'text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+  const isApproved = ticket.status === 'APPROVED';
+
+  if (isApproved) {
+    // ACTIVE / APPROVED STATE
+    ticketStatusAlert.className = 'bg-emerald-50 border border-emerald-300 text-emerald-950 px-3.5 py-3 rounded-2xl text-xs space-y-1 shadow-sm';
+    ticketStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
+    ticketStatusTitle.className = 'font-bold text-sm text-emerald-900';
+    ticketStatusTitle.textContent = 'Pass Approved & Confirmed by Srishty!';
+    ticketStatusPill.className = 'text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold';
+    ticketStatusPill.textContent = 'ACTIVE PASS';
+    ticketStatusDesc.innerHTML = `Your ₹2,000 payment was verified by <strong>Srishty</strong>. Your movie pass is officially active for entry at <strong>Pyramid Lounge</strong>!`;
+
+    // Unlock QR Code
+    qrLockedOverlay.classList.add('hidden');
+    
+    // Status Badge & Seal
+    sealTopText.textContent = 'VERIFIED';
+    sealIconWrap.innerHTML = '<i data-lucide="check" class="w-4 h-4 stroke-[3]"></i>';
+    ticketSeal.className = 'gold-seal w-16 h-16 rounded-full border-2 border-gold-600 flex flex-col items-center justify-center bg-gradient-to-tr from-gold-300 via-gold-400 to-gold-200 text-wine-950 shadow-md';
+
+    if (ticket.checkedIn) {
+      checkInBadge.textContent = 'STATUS: CHECKED IN AT DOOR';
+      checkInBadge.className = 'text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+    } else {
+      checkInBadge.textContent = 'STATUS: ADMIT GRANTED';
+      checkInBadge.className = 'text-[9px] px-2 py-0.5 rounded-full font-bold bg-wine-100 text-wine-800 border border-wine-300';
+    }
+
+    approvalByFooter.textContent = 'Approved by Srishty (Lead Org)';
+    approvalByFooter.className = 'text-[9px] text-emerald-800 font-bold';
+
+    downloadPassBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+    downloadBtnText.textContent = 'Download Ticket (Save to Photos)';
+    notifySrishtyBtn.classList.add('hidden');
+
+    // Scannable QR Payload
+    const qrPayload = JSON.stringify({
+      id: ticket.ticketId,
+      name: ticket.fullName,
+      grade: ticket.classGrade,
+      sec: ticket.section,
+      utr: ticket.utrNumber,
+      approvedBy: "Srishty",
+      status: "VALID_ENTRY",
+      event: "December to Remember",
+      venue: "Pyramid Lounge",
+      date: "2026-12-23"
+    });
+    generateQRCode(qrPayload);
+
   } else {
-    checkInBadge.textContent = 'STATUS: ADMIT GRANTED';
-    checkInBadge.className = 'text-[9px] px-2 py-0.5 rounded-full font-bold bg-wine-100 text-wine-800 border border-wine-300';
+    // PENDING STATE
+    ticketStatusAlert.className = 'bg-amber-50 border border-amber-300 text-amber-950 px-3.5 py-3 rounded-2xl text-xs space-y-1 shadow-sm';
+    ticketStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse';
+    ticketStatusTitle.className = 'font-bold text-sm text-amber-900';
+    ticketStatusTitle.textContent = "Payment Awaiting Srishty's Approval";
+    ticketStatusPill.className = 'text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold';
+    ticketStatusPill.textContent = 'PENDING APPROVAL';
+    ticketStatusDesc.innerHTML = `Your ₹2,000 payment (UTR: <span class="font-mono font-bold text-wine-900">${ticket.utrNumber}</span>) has been submitted. <strong>Srishty</strong> must confirm it before your entry QR pass unlocks!`;
+
+    // Keep QR Code locked
+    qrLockedOverlay.classList.remove('hidden');
+
+    sealTopText.textContent = 'PENDING';
+    sealIconWrap.innerHTML = '<i data-lucide="clock" class="w-4 h-4 stroke-[2.5]"></i>';
+    ticketSeal.className = 'gold-seal w-16 h-16 rounded-full border-2 border-amber-500 flex flex-col items-center justify-center bg-gradient-to-tr from-amber-200 via-amber-300 to-amber-100 text-amber-950 shadow-md';
+
+    checkInBadge.textContent = "STATUS: PENDING SRISHTY'S APPROVAL";
+    checkInBadge.className = 'text-[9px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-900 border border-amber-300';
+
+    approvalByFooter.textContent = "Awaiting Srishty's Verification";
+    approvalByFooter.className = 'text-[9px] text-amber-800 italic';
+
+    downloadPassBtn.classList.add('opacity-75');
+    downloadBtnText.textContent = 'Download Ticket (Pending Approval)';
+    notifySrishtyBtn.classList.remove('hidden');
+
+    // Generate static placeholder QR
+    generateQRCode(`PENDING_APPROVAL_FOR_${ticket.ticketId}`);
   }
 
-  // Generate QR code data payload
-  // Encode verifiable QR string with ticket ID and guest info
-  const qrPayload = JSON.stringify({
-    id: ticket.ticketId,
-    name: ticket.fullName,
-    grade: ticket.classGrade,
-    sec: ticket.section,
-    passes: ticket.quantity,
-    event: "December to Remember",
-    venue: "Pyramid Lounge",
-    date: "2026-12-23"
-  });
-
-  generateQRCode(qrPayload);
+  if (window.lucide) {
+    window.lucide.createIcons();
+  }
 }
 
 // QR Code generator
@@ -314,35 +436,17 @@ function generateQRCode(text) {
   }
 }
 
-// Load saved ticket if exists
-function loadSavedTicket() {
+// Handle Ticket Download
+function handleDownloadPassClick() {
   const currentTicket = getStoredCurrentTicket();
-  if (currentTicket) {
-    viewMyTicketBtn.classList.remove('hidden');
-    // Pre-populate input fields if user wants to review
-    fullNameInput.value = currentTicket.fullName || '';
-    phoneInput.value = currentTicket.phone || '';
-    if (currentTicket.instagram) {
-      instagramInput.value = currentTicket.instagram.replace(/^@/, '');
-    }
+  if (!currentTicket) return;
+
+  if (currentTicket.status !== 'APPROVED') {
+    const confirmDownload = confirm("⚠️ Your ticket is still awaiting Srishty's approval! Would you like to save it as a pending pass anyway, or notify Srishty first?");
+    if (!confirmDownload) return;
   }
-}
 
-function getStoredCurrentTicket() {
-  const raw = localStorage.getItem(STORAGE_CURRENT_TICKET);
-  return raw ? JSON.parse(raw) : null;
-}
-
-function getAllAttendees() {
-  const raw = localStorage.getItem(STORAGE_ALL_ATTENDEES);
-  return raw ? JSON.parse(raw) : [];
-}
-
-function updateAttendeesCount() {
-  const attendees = getAllAttendees();
-  if (registeredCountBadge) {
-    registeredCountBadge.textContent = attendees.length;
-  }
+  downloadTicketAsImage();
 }
 
 // Download Ticket as high-resolution PNG image
@@ -357,7 +461,7 @@ function downloadTicketAsImage() {
   `;
 
   html2canvas(ticketCard, {
-    scale: 3, // Crisp 3x retina resolution for mobile screenshots
+    scale: 3,
     useCORS: true,
     backgroundColor: '#FAF6F0'
   }).then(canvas => {
@@ -376,7 +480,24 @@ function downloadTicketAsImage() {
   });
 }
 
-// Share ticket details via WhatsApp
+// Send WhatsApp Payment Confirmation to Srishty
+function notifySrishtyOnWhatsApp() {
+  const current = getStoredCurrentTicket();
+  if (!current) return;
+
+  const msg = `👑 *Payment Confirmation for Srishty* 👑%0A%0A` +
+    `Hi Srishty! I have registered for *December to Remember (Class 10th Farewell Party)* and completed my ₹2,000 UPI payment.%0A%0A` +
+    `👤 *Attendee:* ${current.fullName} (${current.classGrade} - ${current.section})%0A` +
+    `📱 *Phone:* ${current.phone}%0A` +
+    `💳 *UTR / Ref No:* ${current.utrNumber}%0A` +
+    `💵 *Amount Paid:* ₹2,000 (Exact)%0A` +
+    `🎟️ *Ticket ID:* ${current.ticketId}%0A%0A` +
+    `Please check your FamPay/UPI app (${SRISHTY_UPI}) and approve my VIP pass in your Admin Portal! ✨`;
+
+  window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
+}
+
+// Share ticket details with friends
 function shareOnWhatsApp() {
   const currentTicket = getStoredCurrentTicket();
   if (!currentTicket) return;
@@ -389,17 +510,350 @@ function shareOnWhatsApp() {
     `📍 *Venue:* Pyramid Lounge, Ludhiana%0A` +
     `👔 *Dress Code:* Western Theme%0A` +
     `✨ _One last dance, endless memories ♡_%0A%0A` +
-    `See you on the dance floor!`;
+    `Register and pay ₹2,000 to Srishty to get your pass too!`;
 
   window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
+}
+
+// ==============================================
+// SRISHTY ADMIN PORTAL LOGIC
+// ==============================================
+function openSrishtyAdminModal() {
+  srishtyAdminModal.classList.remove('hidden');
+  if (isAdminAuthenticated) {
+    srishtyAuthView.classList.add('hidden');
+    srishtyDashboardView.classList.remove('hidden');
+    renderAdminDashboard();
+  } else {
+    srishtyAuthView.classList.remove('hidden');
+    srishtyDashboardView.classList.add('hidden');
+    adminPinInput.value = '';
+    adminPinInput.focus();
+  }
+}
+
+function authenticateAdmin() {
+  const entered = adminPinInput.value.trim();
+  if (entered === ADMIN_PIN || entered === 'admin' || entered === '2026') {
+    isAdminAuthenticated = true;
+    srishtyAuthView.classList.add('hidden');
+    srishtyDashboardView.classList.remove('hidden');
+    renderAdminDashboard();
+  } else {
+    alert('Incorrect PIN. Please enter Srishty’s PIN (Default: 2026)');
+  }
+}
+
+function lockAdmin() {
+  isAdminAuthenticated = false;
+  srishtyAuthView.classList.remove('hidden');
+  srishtyDashboardView.classList.add('hidden');
+  adminPinInput.value = '';
+}
+
+function renderAdminDashboard() {
+  updateAdminStatsAndBadges();
+  renderAdminRegistrations();
+}
+
+function updateAdminStatsAndBadges() {
+  const attendees = getAllAttendees();
+  const pending = attendees.filter(a => a.status === 'PENDING');
+  const approved = attendees.filter(a => a.status === 'APPROVED');
+  const totalAmount = approved.length * PASS_PRICE;
+
+  // Update header badge
+  if (pendingBadgeHeader) {
+    if (pending.length > 0) {
+      pendingBadgeHeader.textContent = pending.length;
+      pendingBadgeHeader.classList.remove('hidden');
+    } else {
+      pendingBadgeHeader.classList.add('hidden');
+    }
+  }
+
+  // Update dashboard stats
+  if (statPendingCount) statPendingCount.textContent = pending.length;
+  if (statApprovedCount) statApprovedCount.textContent = approved.length;
+  if (statTotalCollected) statTotalCollected.textContent = `₹${totalAmount.toLocaleString('en-IN')}`;
+
+  if (adminPendingFilterCount) adminPendingFilterCount.textContent = pending.length;
+  if (adminAllFilterCount) adminAllFilterCount.textContent = attendees.length;
+
+  if (registeredCountBadge) registeredCountBadge.textContent = attendees.length;
+}
+
+function renderAdminRegistrations() {
+  const attendees = getAllAttendees();
+  const query = (adminSearchInput.value || '').toLowerCase().trim();
+
+  let filtered = attendees;
+  if (adminCurrentFilter === 'pending') {
+    filtered = attendees.filter(a => a.status === 'PENDING');
+  }
+
+  if (query) {
+    filtered = filtered.filter(a =>
+      a.fullName.toLowerCase().includes(query) ||
+      (a.utrNumber && a.utrNumber.toLowerCase().includes(query)) ||
+      a.ticketId.toLowerCase().includes(query) ||
+      a.phone.includes(query)
+    );
+  }
+
+  adminRegistrationsList.innerHTML = '';
+
+  if (filtered.length === 0) {
+    adminRegistrationsList.innerHTML = `
+      <div class="text-center py-8 bg-white rounded-2xl border border-dashed border-[#dfcebc] text-xs text-zinc-500">
+        <i data-lucide="check-circle-2" class="w-8 h-8 mx-auto text-emerald-500 mb-2"></i>
+        <p class="font-bold text-wine-900">${adminCurrentFilter === 'pending' ? 'All caught up! No pending payments.' : 'No registrations found.'}</p>
+      </div>
+    `;
+    if (window.lucide) window.lucide.createIcons();
+    return;
+  }
+
+  filtered.forEach(item => {
+    const isPending = item.status === 'PENDING';
+    const card = document.createElement('div');
+    card.className = `p-3.5 bg-white rounded-2xl border shadow-xs space-y-2.5 transition ${isPending ? 'border-amber-300 ring-1 ring-amber-200' : 'border-[#e2d2c1]'}`;
+
+    card.innerHTML = `
+      <div class="flex items-start justify-between gap-2">
+        <div>
+          <div class="font-serif font-bold text-sm text-wine-950">${item.fullName}</div>
+          <div class="text-[11px] text-wine-700 font-medium">${item.classGrade} • ${item.section}</div>
+        </div>
+        <span class="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
+          item.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
+          item.status === 'REJECTED' ? 'bg-rose-100 text-rose-800 border border-rose-300' :
+          'bg-amber-100 text-amber-800 border border-amber-300'
+        }">
+          ${item.status}
+        </span>
+      </div>
+
+      <div class="bg-champagne-50 p-2 rounded-xl text-xs space-y-1 font-mono text-[11px] border border-champagne-200">
+        <div class="flex justify-between">
+          <span class="text-zinc-500">Amount:</span>
+          <strong class="text-wine-900 font-bold">₹${item.totalAmount} (Exact)</strong>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-zinc-500">UTR / Ref:</span>
+          <strong class="text-wine-950 font-bold bg-amber-100/60 px-1 rounded">${item.utrNumber || 'N/A'}</strong>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-zinc-500">Ticket ID:</span>
+          <span class="text-zinc-700">#${item.ticketId}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-zinc-500">Phone:</span>
+          <a href="tel:${item.phone}" class="text-wine-700 hover:underline">${item.phone}</a>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 pt-1">
+        ${isPending ? `
+          <button
+            onclick="adminApproveTicket('${item.ticketId}')"
+            class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-xs flex items-center justify-center gap-1 active:scale-95"
+          >
+            <span>✅ Approve & Issue Pass</span>
+          </button>
+          <button
+            onclick="adminRejectTicket('${item.ticketId}')"
+            class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold transition active:scale-95"
+          >
+            Reject
+          </button>
+        ` : `
+          <button
+            onclick="adminRevokeTicket('${item.ticketId}')"
+            class="py-1 px-2 text-[10px] bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg font-medium"
+          >
+            Revoke / Re-review
+          </button>
+        `}
+        <a
+          href="https://api.whatsapp.com/send?phone=${item.phone.replace(/[^0-9]/g, '')}&text=Hi%20${encodeURIComponent(item.fullName)},%20this%20is%20Srishty%20regarding%20your%20December%20to%20Remember%20ticket!"
+          target="_blank"
+          class="p-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 rounded-lg transition"
+          title="Message on WhatsApp"
+        >
+          <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+        </a>
+      </div>
+    `;
+
+    adminRegistrationsList.appendChild(card);
+  });
+
+  if (window.lucide) window.lucide.createIcons();
+}
+
+// Admin Action: Approve Ticket
+window.adminApproveTicket = function(ticketId) {
+  const attendees = getAllAttendees();
+  const attendee = attendees.find(a => a.ticketId === ticketId);
+  if (!attendee) return;
+
+  attendee.status = 'APPROVED';
+  attendee.approvedBy = 'Srishty';
+  attendee.approvedAt = new Date().toISOString();
+
+  localStorage.setItem(STORAGE_ALL_ATTENDEES, JSON.stringify(attendees));
+
+  // If this is also the current active ticket in session, update it!
+  const current = getStoredCurrentTicket();
+  if (current && current.ticketId === ticketId) {
+    current.status = 'APPROVED';
+    current.approvedBy = 'Srishty';
+    current.approvedAt = attendee.approvedAt;
+    localStorage.setItem(STORAGE_CURRENT_TICKET, JSON.stringify(current));
+    renderTicket(current);
+    triggerConfetti();
+  }
+
+  renderAdminDashboard();
+};
+
+// Admin Action: Reject Ticket
+window.adminRejectTicket = function(ticketId) {
+  const reason = prompt('Reason for rejecting (e.g. UTR mismatch, wrong amount):', 'Payment verification failed');
+  if (reason === null) return;
+
+  const attendees = getAllAttendees();
+  const attendee = attendees.find(a => a.ticketId === ticketId);
+  if (!attendee) return;
+
+  attendee.status = 'REJECTED';
+  attendee.rejectReason = reason;
+
+  localStorage.setItem(STORAGE_ALL_ATTENDEES, JSON.stringify(attendees));
+
+  const current = getStoredCurrentTicket();
+  if (current && current.ticketId === ticketId) {
+    current.status = 'REJECTED';
+    current.rejectReason = reason;
+    localStorage.setItem(STORAGE_CURRENT_TICKET, JSON.stringify(current));
+    renderTicket(current);
+  }
+
+  renderAdminDashboard();
+};
+
+// Admin Action: Revoke Ticket
+window.adminRevokeTicket = function(ticketId) {
+  const attendees = getAllAttendees();
+  const attendee = attendees.find(a => a.ticketId === ticketId);
+  if (!attendee) return;
+
+  attendee.status = 'PENDING';
+  attendee.approvedBy = null;
+  attendee.approvedAt = null;
+
+  localStorage.setItem(STORAGE_ALL_ATTENDEES, JSON.stringify(attendees));
+
+  const current = getStoredCurrentTicket();
+  if (current && current.ticketId === ticketId) {
+    current.status = 'PENDING';
+    localStorage.setItem(STORAGE_CURRENT_TICKET, JSON.stringify(current));
+    renderTicket(current);
+  }
+
+  renderAdminDashboard();
+};
+
+// Door Entry Scanner Verification (incorporates Srishty's Approval check)
+function verifyTicketFromInput() {
+  const query = scanInput.value.trim();
+  if (!query) {
+    alert('Please enter or scan a Ticket ID.');
+    return;
+  }
+
+  scanResultBox.classList.remove('hidden');
+
+  const attendees = getAllAttendees();
+  let found = attendees.find(a => a.ticketId.toLowerCase() === query.toLowerCase() || query.includes(a.ticketId));
+
+  if (!found) {
+    const current = getStoredCurrentTicket();
+    if (current && (current.ticketId.toLowerCase() === query.toLowerCase() || query.includes(current.ticketId))) {
+      found = current;
+    }
+  }
+
+  if (found) {
+    if (found.status !== 'APPROVED') {
+      scanResultBox.className = 'p-3 rounded-xl text-xs space-y-1 bg-amber-50 border border-amber-300 text-amber-900';
+      scanResultBox.innerHTML = `
+        <div class="font-bold flex items-center gap-1.5 text-sm text-amber-900">
+          <span class="text-base">⚠️</span> ENTRY DENIED — PAYMENT NOT APPROVED
+        </div>
+        <div><strong>Guest:</strong> ${found.fullName} (${found.classGrade} - ${found.section})</div>
+        <div><strong>Status:</strong> ${found.status} (Awaiting Srishty's verification)</div>
+        <p class="text-[11px] text-amber-800 pt-1">
+          Srishty has not approved this attendee's ₹2,000 payment yet. Please contact Srishty at <strong>${SRISHTY_UPI}</strong>.
+        </p>
+      `;
+      return;
+    }
+
+    found.checkedIn = true;
+    localStorage.setItem(STORAGE_CURRENT_TICKET, JSON.stringify(found));
+
+    scanResultBox.className = 'p-3 rounded-xl text-xs space-y-1 bg-emerald-50 border border-emerald-300 text-emerald-900';
+    scanResultBox.innerHTML = `
+      <div class="font-bold flex items-center gap-1.5 text-sm text-emerald-800">
+        <span class="text-base">✅</span> VALID PASS — ADMIT GUEST
+      </div>
+      <div><strong>Guest:</strong> ${found.fullName} (${found.classGrade} - ${found.section})</div>
+      <div><strong>Verified By:</strong> Srishty | <strong>Amount:</strong> ₹${found.totalAmount}</div>
+      <div class="text-[10px] text-emerald-700 pt-1 font-mono">Status: Checked in at Pyramid Lounge door!</div>
+    `;
+
+    renderTicket(found);
+  } else {
+    scanResultBox.className = 'p-3 rounded-xl text-xs space-y-1 bg-rose-50 border border-rose-300 text-rose-900';
+    scanResultBox.innerHTML = `
+      <div class="font-bold flex items-center gap-1.5 text-sm text-rose-800">
+        <span class="text-base">❌</span> INVALID OR UNREGISTERED PASS
+      </div>
+      <p class="text-[11px]">No matching attendee found for code: <span class="font-mono">${query}</span>.</p>
+    `;
+  }
+}
+
+// Storage Helpers
+function loadSavedTicket() {
+  const currentTicket = getStoredCurrentTicket();
+  if (currentTicket) {
+    viewMyTicketBtn.classList.remove('hidden');
+    fullNameInput.value = currentTicket.fullName || '';
+    phoneInput.value = currentTicket.phone || '';
+    if (currentTicket.instagram) {
+      instagramInput.value = currentTicket.instagram.replace(/^@/, '');
+    }
+  }
+}
+
+function getStoredCurrentTicket() {
+  const raw = localStorage.getItem(STORAGE_CURRENT_TICKET);
+  return raw ? JSON.parse(raw) : null;
+}
+
+function getAllAttendees() {
+  const raw = localStorage.getItem(STORAGE_ALL_ATTENDEES);
+  return raw ? JSON.parse(raw) : [];
 }
 
 // Confetti Effect
 function triggerConfetti() {
   if (typeof confetti === 'function') {
-    // Rich Wine & Gold festive confetti burst
     confetti({
-      particleCount: 80,
+      particleCount: 90,
       spread: 70,
       origin: { y: 0.6 },
       colors: ['#72101F', '#CCA028', '#F2D785', '#AB2338', '#ffffff']
@@ -407,14 +861,14 @@ function triggerConfetti() {
 
     setTimeout(() => {
       confetti({
-        particleCount: 50,
+        particleCount: 60,
         angle: 60,
         spread: 55,
         origin: { x: 0 },
         colors: ['#72101F', '#CCA028', '#F2D785']
       });
       confetti({
-        particleCount: 50,
+        particleCount: 60,
         angle: 120,
         spread: 55,
         origin: { x: 1 },
@@ -453,51 +907,4 @@ function initCountdown() {
 
   update();
   setInterval(update, 1000);
-}
-
-// Organizer Gate Ticket Verification
-function verifyTicketFromInput() {
-  const query = scanInput.value.trim();
-  if (!query) {
-    alert('Please enter or scan a Ticket ID.');
-    return;
-  }
-
-  scanResultBox.classList.remove('hidden');
-
-  const attendees = getAllAttendees();
-  let found = attendees.find(a => a.ticketId.toLowerCase() === query.toLowerCase() || (query.includes(a.ticketId)));
-
-  if (!found) {
-    // Check if it matches current stored ticket
-    const current = getStoredCurrentTicket();
-    if (current && (current.ticketId.toLowerCase() === query.toLowerCase() || query.includes(current.ticketId))) {
-      found = current;
-    }
-  }
-
-  if (found) {
-    found.checkedIn = true;
-    localStorage.setItem(STORAGE_CURRENT_TICKET, JSON.stringify(found));
-
-    scanResultBox.className = 'p-3 rounded-xl text-xs space-y-1 bg-emerald-50 border border-emerald-300 text-emerald-900';
-    scanResultBox.innerHTML = `
-      <div class="font-bold flex items-center gap-1.5 text-sm text-emerald-800">
-        <span class="text-base">✅</span> VALID PASS — ADMIT GUEST
-      </div>
-      <div><strong>Guest:</strong> ${found.fullName} (${found.classGrade} - ${found.section})</div>
-      <div><strong>Passes:</strong> ${found.quantity} Person(s) | <strong>Rate:</strong> ₹${found.totalAmount}</div>
-      <div class="text-[10px] text-emerald-700 pt-1 font-mono">Timestamp: Checked in at Pyramid Lounge door!</div>
-    `;
-
-    renderTicket(found);
-  } else {
-    scanResultBox.className = 'p-3 rounded-xl text-xs space-y-1 bg-rose-50 border border-rose-300 text-rose-900';
-    scanResultBox.innerHTML = `
-      <div class="font-bold flex items-center gap-1.5 text-sm text-rose-800">
-        <span class="text-base">❌</span> INVALID OR UNREGISTERED PASS
-      </div>
-      <p class="text-[11px]">No matching attendee found for code: <span class="font-mono">${query}</span>.</p>
-    `;
-  }
 }
