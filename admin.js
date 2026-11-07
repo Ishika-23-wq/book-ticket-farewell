@@ -5,9 +5,28 @@
 =================================================== */
 
 const ADMIN_PIN_DEFAULT = '2026';
-const API_BASE = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '3000'))
-  ? 'http://localhost:3000'
-  : '';
+
+function getApiBase() {
+  const custom = localStorage.getItem('dtr_backend_url');
+  if (custom && custom.trim()) {
+    return custom.trim().replace(/\/+$/, '');
+  }
+
+  // Local development fallback: if opened via file:// or Live Server (e.g. port 5500), default to localhost:3000
+  if (window.location.protocol === 'file:') {
+    return 'http://localhost:3000';
+  }
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    if (window.location.port && window.location.port !== '3000') {
+      return 'http://localhost:3000';
+    }
+  }
+
+  // In production (Vercel, Render, etc.), use same origin
+  return '';
+}
+
+let API_BASE = getApiBase();
 
 let currentPin = sessionStorage.getItem('srishty_pin') || '';
 // Default to 'all' so both existing approved/rejected and pending entries are immediately visible based on status
@@ -19,6 +38,8 @@ let pollInterval = null;
 const authContainer = document.getElementById('authContainer');
 const dashboardContainer = document.getElementById('dashboardContainer');
 const connectionErrorBanner = document.getElementById('connectionErrorBanner');
+const configBackendBtn = document.getElementById('configBackendBtn');
+const configApiHeaderBtn = document.getElementById('configApiHeaderBtn');
 const retryConnectionBtn = document.getElementById('retryConnectionBtn');
 const pinInput = document.getElementById('pinInput');
 const loginBtn = document.getElementById('loginBtn');
@@ -124,6 +145,41 @@ function setupEventListeners() {
       fetchAttendeesFromDatabase();
     });
   }
+
+  if (configBackendBtn) {
+    configBackendBtn.addEventListener('click', promptConfigureBackendUrl);
+  }
+
+  if (configApiHeaderBtn) {
+    configApiHeaderBtn.addEventListener('click', promptConfigureBackendUrl);
+  }
+}
+
+// Allow Srishty to connect to external backend (Render / Railway / local) or default Vercel
+function promptConfigureBackendUrl() {
+  const current = localStorage.getItem('dtr_backend_url') || '';
+  const entered = prompt(
+    '⚙️ Configure Backend Server API URL:\n\n' +
+    '• For Vercel Serverless (Default): Leave BLANK\n' +
+    '• For Render / Railway backend: Enter URL (e.g. https://your-backend.onrender.com)\n' +
+    '• For Local Node server: http://localhost:3000\n\n' +
+    'Current Config: ' + (current || 'Same Origin / Vercel Default'),
+    current
+  );
+
+  if (entered === null) return;
+
+  const cleaned = entered.trim().replace(/\/+$/, '');
+  if (cleaned) {
+    localStorage.setItem('dtr_backend_url', cleaned);
+    alert('✅ Backend URL updated to: ' + cleaned);
+  } else {
+    localStorage.removeItem('dtr_backend_url');
+    alert('✅ Reset to default (Same origin / Vercel Serverless).');
+  }
+
+  API_BASE = getApiBase();
+  fetchAttendeesFromDatabase();
 }
 
 function updateFilterTabStyles() {

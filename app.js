@@ -9,9 +9,28 @@
 // Global State
 const PASS_PRICE = 2000;
 const SRISHTY_UPI = '9592982012@fam';
-const API_BASE = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '3000'))
-  ? 'http://localhost:3000'
-  : '';
+
+function getApiBase() {
+  const custom = localStorage.getItem('dtr_backend_url');
+  if (custom && custom.trim()) {
+    return custom.trim().replace(/\/+$/, '');
+  }
+
+  // Local development fallback: if opened via file:// or Live Server (e.g. port 5500), default to localhost:3000
+  if (window.location.protocol === 'file:') {
+    return 'http://localhost:3000';
+  }
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    if (window.location.port && window.location.port !== '3000') {
+      return 'http://localhost:3000';
+    }
+  }
+
+  // In production (Vercel, Render, etc.), use same origin
+  return '';
+}
+
+const API_BASE = getApiBase();
 let passQuantity = 1;
 let qrcodeInstance = null;
 let srishtyDynamicQrInstance = null;

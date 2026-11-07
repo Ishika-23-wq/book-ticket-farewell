@@ -8,42 +8,63 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const ADMIN_PIN = '2026';
 const DATA_DIR = path.join(__dirname, 'data');
-const DB_PATH = path.join(DATA_DIR, 'database.sqlite');
 
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+// In Vercel Serverless environment, filesystem is read-only except /tmp.
+// Copy bundled SQLite database to /tmp so DatabaseSync can open and write.
+let DB_PATH;
+if (process.env.VERCEL) {
+  const TMP_DB = path.join('/tmp', 'database.sqlite');
+  const SEED_DB = path.join(DATA_DIR, 'database.sqlite');
+  if (!fs.existsSync(TMP_DB) && fs.existsSync(SEED_DB)) {
+    try {
+      fs.copyFileSync(SEED_DB, TMP_DB);
+      console.log('✅ Seed SQLite Database copied to /tmp/database.sqlite');
+    } catch (e) {
+      console.warn('⚠️ Could not copy seed DB to /tmp:', e);
+    }
+  }
+  DB_PATH = fs.existsSync(TMP_DB) ? TMP_DB : SEED_DB;
+} else {
+  // Ensure data directory exists
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  DB_PATH = path.join(DATA_DIR, 'database.sqlite');
 }
 
 // Initialize SQLite Database
-const db = new DatabaseSync(DB_PATH);
-db.exec(`
-  CREATE TABLE IF NOT EXISTS attendees (
-    ticketId TEXT PRIMARY KEY,
-    fullName TEXT NOT NULL,
-    classGrade TEXT NOT NULL,
-    section TEXT NOT NULL,
-    phone TEXT NOT NULL,
-    instagram TEXT,
-    song TEXT,
-    quantity INTEGER DEFAULT 1,
-    companions TEXT,
-    totalAmount INTEGER NOT NULL,
-    utrNumber TEXT NOT NULL,
-    paidTo TEXT NOT NULL,
-    status TEXT DEFAULT 'PENDING',
-    rejectReason TEXT,
-    approvedBy TEXT,
-    approvedAt TEXT,
-    checkedIn INTEGER DEFAULT 0,
-    timestamp TEXT NOT NULL
-  )
-`);
-
-console.log('✅ SQLite Database initialized at:', DB_PATH);
+let db;
+try {
+  db = new DatabaseSync(DB_PATH);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS attendees (
+      ticketId TEXT PRIMARY KEY,
+      fullName TEXT NOT NULL,
+      classGrade TEXT NOT NULL,
+      section TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      instagram TEXT,
+      song TEXT,
+      quantity INTEGER DEFAULT 1,
+      companions TEXT,
+      totalAmount INTEGER NOT NULL,
+      utrNumber TEXT NOT NULL,
+      paidTo TEXT NOT NULL,
+      status TEXT DEFAULT 'PENDING',
+      rejectReason TEXT,
+      approvedBy TEXT,
+      approvedAt TEXT,
+      checkedIn INTEGER DEFAULT 0,
+      timestamp TEXT NOT NULL
+    )
+  `);
+  console.log('✅ SQLite Database initialized at:', DB_PATH);
+} catch (dbErr) {
+  console.error('❌ SQLite initialization error:', dbErr);
+}
 
 // MIME Types for static assets
 const MIME_TYPES = {
@@ -74,8 +95,18 @@ function sendJSON(res, statusCode, data) {
   res.end(JSON.stringify(data));
 }
 
-// Helper to parse JSON body
+// Helper to parse JSON body (handles both native Node streams and pre-parsed Vercel bodies)
 function parseBody(req) {
+  if (req.body && typeof req.body === 'object') {
+    return Promise.resolve(req.body);
+  }
+  if (typeof req.body === 'string') {
+    try {
+      return Promise.resolve(JSON.parse(req.body));
+    } catch (e) {
+      return Promise.resolve({});
+    }
+  }
   return new Promise((resolve, reject) => {
     let body = '';
     req.on('data', chunk => {
@@ -96,8 +127,8 @@ function parseBody(req) {
   });
 }
 
-// HTTP Server
-const server = http.createServer(async (req, res) => {
+// Request Handler (used by both local HTTP server and Vercel Serverless Function)
+async function handleRequest(req, res) {
   // CORS Preflight
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
@@ -109,7 +140,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
+  const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const pathname = parsedUrl.pathname;
 
   // ==========================================
@@ -335,9 +366,16 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': contentType });
     fs.createReadStream(filePath).pipe(res);
   });
-});
+}
 
-server.listen(PORT, () => {
-  console.log(`🚀 December to Remember Server running at http://localhost:${PORT}`);
-  console.log(`👑 Srishty Admin Portal at http://localhost:${PORT}/admin`);
-});
+// Start HTTP server when executed directly (node server.js)
+if (require.main === module) {
+  const server = http.createServer(handleRequest);
+  server.listen(PORT, () => {
+    console.log(`🚀 December to Remember Server running at http://localhost:${PORT}`);
+    console.log(`👑 Srishty Admin Portal at http://localhost:${PORT}/admin`);
+  });
+}
+
+module.exports = handleRequest;
+module.exports.handleRequest = handleRequest;
