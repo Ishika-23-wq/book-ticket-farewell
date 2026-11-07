@@ -1,20 +1,20 @@
 /* ===================================================
    DECEMBER TO REMEMBER - CLASS 10TH FAREWELL APP JS
-   Strict Approval Workflow:
-   - Tickets are ONLY shown once Srishty accepts!
-   - Pending state: Shows review status (ticket hidden).
-   - Rejected state: Shows rejection details (ticket hidden).
+   - Dynamic Multiple Participants & Companion Details
+   - Auto-updating Locked UPI Payment (₹2,000 per person)
+   - Strict Srishty Approval & Rejection Logic
 =================================================== */
 
 // Global State
 const PASS_PRICE = 2000;
+let passQuantity = 1;
 let qrcodeInstance = null;
 let isAdminAuthenticated = false;
 let adminCurrentFilter = 'pending'; // 'pending' | 'all'
 
 // Srishty's Details
 const SRISHTY_UPI = '9592982012@fam';
-const ADMIN_PIN = '2026';
+const ADMIN_PIN = '11011';
 
 // Target Event Date: December 23, 2026 18:00:00 (6:00 PM)
 const EVENT_DATE = new Date('2026-12-23T18:00:00+05:30').getTime();
@@ -22,6 +22,12 @@ const EVENT_DATE = new Date('2026-12-23T18:00:00+05:30').getTime();
 // Storage keys
 const STORAGE_CURRENT_TICKET = 'dtr_current_ticket';
 const STORAGE_ALL_ATTENDEES = 'dtr_all_attendees';
+const STORAGE_AUTHORIZED_DEVICE = 'srishty_authorized_device';
+
+// Secret Admin Access (Hidden from regular attendees)
+const secretAdminTapArea = document.getElementById('secretAdminTapArea');
+let secretTapCount = 0;
+let secretTapTimer = null;
 
 // DOM Elements - Form
 const form = document.getElementById('bookingForm');
@@ -32,11 +38,38 @@ const phoneInput = document.getElementById('phoneNumber');
 const instagramInput = document.getElementById('instagramHandle');
 const djSongInput = document.getElementById('djSong');
 const utrNumberInput = document.getElementById('utrNumber');
-const paymentAmountInput = document.getElementById('paymentAmount');
-const amountErrorMsg = document.getElementById('amountErrorMsg');
 const submitBtn = document.getElementById('submitBtn');
+
+// Pass Counter & Companions
+const decreasePassesBtn = document.getElementById('decreasePasses');
+const increasePassesBtn = document.getElementById('increasePasses');
+const passCountEl = document.getElementById('passCount');
+const companionsSection = document.getElementById('companionsSection');
+const companionsInputsList = document.getElementById('companionsInputsList');
+
+// Payment Amount & Dynamic UPI Controls
+const subPaymentSubtitle = document.getElementById('subPaymentSubtitle');
+const payLockedAmountBadge = document.getElementById('payLockedAmountBadge');
+const upiPayLinkBtn = document.getElementById('upiPayLinkBtn');
+const upiPayBtnText = document.getElementById('upiPayBtnText');
+const upiLockedNote = document.getElementById('upiLockedNote');
 const copyUpiBtn = document.getElementById('copyUpiBtn');
 const copyUpiLabel = document.getElementById('copyUpiLabel');
+
+const paymentAmountInput = document.getElementById('paymentAmount');
+const fixedAmountLabel = document.getElementById('fixedAmountLabel');
+const amountErrorMsg = document.getElementById('amountErrorMsg');
+const amountErrorText = document.getElementById('amountErrorText');
+
+// Srishty Amount-Locked Dynamic QR Elements
+const toggleLockedQrBtn = document.getElementById('toggleLockedQrBtn');
+const toggleQrLabel = document.getElementById('toggleQrLabel');
+const toggleQrIcon = document.getElementById('toggleQrIcon');
+const lockedQrContainer = document.getElementById('lockedQrContainer');
+const qrLockedBadgeText = document.getElementById('qrLockedBadgeText');
+const qrScanHelpText = document.getElementById('qrScanHelpText');
+const srishtyDynamicQr = document.getElementById('srishtyDynamicQr');
+let srishtyDynamicQrInstance = null;
 
 // Panels & Tab Navigation
 const registerPanel = document.getElementById('registerPanel');
@@ -54,6 +87,9 @@ const approvedTicketState = document.getElementById('approvedTicketState');
 // Pending State Elements
 const pendingGuestName = document.getElementById('pendingGuestName');
 const pendingGradeSec = document.getElementById('pendingGradeSec');
+const pendingCompanionsRow = document.getElementById('pendingCompanionsRow');
+const pendingCompanionsText = document.getElementById('pendingCompanionsText');
+const pendingAmountText = document.getElementById('pendingAmountText');
 const pendingUtr = document.getElementById('pendingUtr');
 const pendingRefId = document.getElementById('pendingRefId');
 const notifySrishtyBtn = document.getElementById('notifySrishtyBtn');
@@ -71,6 +107,11 @@ const reapplyBtn = document.getElementById('reapplyBtn');
 const passRefId = document.getElementById('passRefId');
 const passGuestName = document.getElementById('passGuestName');
 const passGradeSec = document.getElementById('passGradeSec');
+const passCompanionsBox = document.getElementById('passCompanionsBox');
+const passCompanionsCount = document.getElementById('passCompanionsCount');
+const passCompanionsListText = document.getElementById('passCompanionsListText');
+const passQuantityEl = document.getElementById('passQuantity');
+const passPaidRate = document.getElementById('passPaidRate');
 const passUtrDisplay = document.getElementById('passUtrDisplay');
 const passBarcodeText = document.getElementById('passBarcodeText');
 const checkInBadge = document.getElementById('checkInBadge');
@@ -129,16 +170,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initCountdown();
   setupEventListeners();
+  updatePassQuantityUI();
   loadSavedTicket();
   updateAdminStatsAndBadges();
+  checkAdminAccessGate(); // Manages secret admin visibility for Srishty
 });
 
 // Event Listeners
 function setupEventListeners() {
-  // Enforce exact ₹2,000 payment - block any value less than or more than 2000
-  if (paymentAmountInput) {
-    paymentAmountInput.addEventListener('input', validatePaymentAmount);
-    paymentAmountInput.addEventListener('change', validatePaymentAmount);
+  // Secret Triple-Tap on Top Header Area to unlock Srishty Admin Portal
+  if (secretAdminTapArea) {
+    secretAdminTapArea.addEventListener('click', () => {
+      secretTapCount++;
+      clearTimeout(secretTapTimer);
+      secretTapTimer = setTimeout(() => {
+        secretTapCount = 0;
+      }, 1200);
+
+      if (secretTapCount >= 3) {
+        secretTapCount = 0;
+        revealAdminControls();
+        localStorage.setItem(STORAGE_AUTHORIZED_DEVICE, 'true');
+        openSrishtyAdminModal();
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 35, spread: 50, origin: { y: 0.1 } });
+        }
+      }
+    });
+  }
+
+  // Pass Counter (+/- buttons)
+  if (decreasePassesBtn) {
+    decreasePassesBtn.addEventListener('click', () => {
+      if (passQuantity > 1) {
+        passQuantity--;
+        updatePassQuantityUI();
+      }
+    });
+  }
+
+  if (increasePassesBtn) {
+    increasePassesBtn.addEventListener('click', () => {
+      if (passQuantity < 5) {
+        passQuantity++;
+        updatePassQuantityUI();
+      } else {
+        alert('Maximum 5 passes can be booked in a single registration. For larger groups, please submit an additional booking!');
+      }
+    });
   }
 
   // Copy UPI
@@ -147,11 +226,28 @@ function setupEventListeners() {
       navigator.clipboard.writeText(SRISHTY_UPI).then(() => {
         copyUpiLabel.textContent = 'Copied!';
         setTimeout(() => {
-          copyUpiLabel.textContent = 'Copy';
+          copyUpiLabel.textContent = 'Copy ID';
         }, 2000);
       }).catch(() => {
         prompt('Copy Srishty UPI ID:', SRISHTY_UPI);
       });
+    });
+  }
+
+  // Toggle Srishty Amount-Locked QR
+  if (toggleLockedQrBtn) {
+    toggleLockedQrBtn.addEventListener('click', () => {
+      const isHidden = lockedQrContainer.classList.contains('hidden');
+      if (isHidden) {
+        lockedQrContainer.classList.remove('hidden');
+        toggleQrLabel.textContent = 'Hide Amount-Locked QR Code';
+        if (toggleQrIcon) toggleQrIcon.classList.add('rotate-180');
+        initSrishtyLockedQr(passQuantity * PASS_PRICE);
+      } else {
+        lockedQrContainer.classList.add('hidden');
+        toggleQrLabel.textContent = 'Show Amount-Locked QR Code';
+        if (toggleQrIcon) toggleQrIcon.classList.remove('rotate-180');
+      }
     });
   }
 
@@ -232,6 +328,158 @@ function setupEventListeners() {
   });
 }
 
+// Update Pass Counter, Amount, and Dynamic Companion Inputs
+function updatePassQuantityUI() {
+  const totalAmount = passQuantity * PASS_PRICE;
+  const formattedTotal = `₹${totalAmount.toLocaleString('en-IN')}`;
+
+  // Update Counter Display
+  if (passCountEl) passCountEl.textContent = passQuantity;
+
+  // Update Payment Details
+  if (subPaymentSubtitle) {
+    subPaymentSubtitle.textContent = `Exact ${formattedTotal} payment required (${passQuantity} ${passQuantity === 1 ? 'person' : 'people'})`;
+  }
+  if (payLockedAmountBadge) {
+    payLockedAmountBadge.textContent = `🔒 Total: ${formattedTotal} Locked`;
+  }
+  if (upiPayBtnText) {
+    upiPayBtnText.textContent = `Tap to Pay ${formattedTotal} via UPI (GPay / PhonePe / Paytm)`;
+  }
+  if (upiPayLinkBtn) {
+    upiPayLinkBtn.href = `upi://pay?pa=9592982012@fam&pn=Srishty&am=${totalAmount}.00&cu=INR&tn=December%20To%20Remember%20Pass%20Fee`;
+  }
+  if (upiLockedNote) {
+    upiLockedNote.innerHTML = `Opens your payment app with the amount <strong>automatically locked to ${formattedTotal}</strong>.`;
+  }
+  if (fixedAmountLabel) {
+    fixedAmountLabel.textContent = `Fixed at ${formattedTotal} (${passQuantity} ${passQuantity === 1 ? 'Person' : 'Persons'})`;
+  }
+  if (paymentAmountInput) {
+    paymentAmountInput.value = totalAmount;
+  }
+  if (qrLockedBadgeText) {
+    qrLockedBadgeText.textContent = `Pre-set Amount: ${formattedTotal} (Non-editable)`;
+  }
+  if (qrScanHelpText) {
+    qrScanHelpText.innerHTML = `Scanning this QR code with Google Pay, PhonePe, or Paytm automatically fixes the payment to <strong>strictly ${formattedTotal}</strong>.`;
+  }
+
+  // Update Dynamic Locked QR Code if open
+  if (srishtyDynamicQr && !lockedQrContainer.classList.contains('hidden')) {
+    initSrishtyLockedQr(totalAmount);
+  }
+
+  // Manage Accompanying Companion Inputs
+  renderCompanionInputs();
+
+  if (window.lucide) {
+    window.lucide.createIcons();
+  }
+}
+
+// Generate companion input rows dynamically when passQuantity > 1
+function renderCompanionInputs() {
+  if (!companionsSection || !companionsInputsList) return;
+
+  if (passQuantity <= 1) {
+    companionsSection.classList.add('hidden');
+    companionsInputsList.innerHTML = '';
+    return;
+  }
+
+  companionsSection.classList.remove('hidden');
+
+  // Preserve already entered values
+  const currentValues = [];
+  const existingRows = companionsInputsList.querySelectorAll('.companion-row');
+  existingRows.forEach(row => {
+    const nameInput = row.querySelector('.companion-name');
+    const classSelect = row.querySelector('.companion-class');
+    const secSelect = row.querySelector('.companion-sec');
+    if (nameInput) {
+      currentValues.push({
+        name: nameInput.value,
+        grade: classSelect ? classSelect.value : 'Class 10th',
+        sec: secSelect ? secSelect.value : 'Section A'
+      });
+    }
+  });
+
+  companionsInputsList.innerHTML = '';
+
+  const neededCompanions = passQuantity - 1; // e.g. 2 passes = 1 companion (Guest #2)
+
+  for (let i = 0; i < neededCompanions; i++) {
+    const guestNumber = i + 2;
+    const prev = currentValues[i] || { name: '', grade: 'Class 10th', sec: 'Section A' };
+
+    const guestCard = document.createElement('div');
+    guestCard.className = 'companion-row p-3 bg-white/95 rounded-xl border border-[#e5d4c2] shadow-xs space-y-2';
+
+    guestCard.innerHTML = `
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-wine-900 flex items-center gap-1.5">
+          <span class="w-4 h-4 rounded-full bg-wine-700 text-gold-300 flex items-center justify-center text-[10px] font-mono">
+            ${guestNumber}
+          </span>
+          <span>Guest #${guestNumber} Details *</span>
+        </span>
+        <span class="text-[10px] text-zinc-400">Class 10th Attendee</span>
+      </div>
+
+      <div>
+        <input
+          type="text"
+          required
+          placeholder="Companion #${guestNumber} Full Name"
+          value="${prev.name}"
+          class="companion-name w-full px-3 py-2 bg-champagne-50/70 border border-[#dbcaa7] rounded-xl text-xs text-wine-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-wine-600"
+        />
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <select class="companion-class px-2.5 py-1.5 bg-champagne-50/70 border border-[#dbcaa7] rounded-xl text-xs text-wine-900 focus:outline-none focus:ring-2 focus:ring-wine-600">
+          <option value="Class 10th" ${prev.grade === 'Class 10th' ? 'selected' : ''}>Class 10th</option>
+          <option value="Class 10th Alumni" ${prev.grade === 'Class 10th Alumni' ? 'selected' : ''}>Class 10th Alumni</option>
+          <option value="Special Guest" ${prev.grade === 'Special Guest' ? 'selected' : ''}>Special Guest</option>
+        </select>
+        <select class="companion-sec px-2.5 py-1.5 bg-champagne-50/70 border border-[#dbcaa7] rounded-xl text-xs text-wine-900 focus:outline-none focus:ring-2 focus:ring-wine-600">
+          <option value="Section A" ${prev.sec === 'Section A' ? 'selected' : ''}>Section A</option>
+          <option value="Section B" ${prev.sec === 'Section B' ? 'selected' : ''}>Section B</option>
+          <option value="Section C" ${prev.sec === 'Section C' ? 'selected' : ''}>Section C</option>
+          <option value="Section D" ${prev.sec === 'Section D' ? 'selected' : ''}>Section D</option>
+          <option value="Section E" ${prev.sec === 'Section E' ? 'selected' : ''}>Section E</option>
+          <option value="Other" ${prev.sec === 'Other' ? 'selected' : ''}>Other</option>
+        </select>
+      </div>
+    `;
+
+    companionsInputsList.appendChild(guestCard);
+  }
+}
+
+// Dynamic Srishty UPI QR Code with pre-locked total amount
+function initSrishtyLockedQr(amount = 2000) {
+  if (!srishtyDynamicQr) return;
+  srishtyDynamicQr.innerHTML = '';
+  // NPCI standard URI with am=[amount].00
+  const lockedUpiUri = `upi://pay?pa=9592982012@fam&pn=Srishty&am=${amount}.00&cu=INR&tn=December%20To%20Remember%20Pass%20Fee`;
+  try {
+    srishtyDynamicQrInstance = new QRCode(srishtyDynamicQr, {
+      text: lockedUpiUri,
+      width: 140,
+      height: 140,
+      colorDark: "#1a0508",
+      colorLight: "#FAF6F0",
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch (err) {
+    console.error('Failed to create Srishty dynamic QR:', err);
+    srishtyDynamicQr.innerHTML = '<span class="text-xs text-wine-800 font-mono">Scan on UPI App</span>';
+  }
+}
+
 // Switch between tabs & handle the 3 states
 function switchTab(tab) {
   if (tab === 'register') {
@@ -265,7 +513,6 @@ function switchTab(tab) {
 function renderTicketPanelState() {
   const ticket = getStoredCurrentTicket();
 
-  // Hide all 4 states initially
   emptyTicketState.classList.add('hidden');
   pendingTicketState.classList.add('hidden');
   rejectedTicketState.classList.add('hidden');
@@ -283,6 +530,18 @@ function renderTicketPanelState() {
     pendingGradeSec.textContent = `${ticket.classGrade} • ${ticket.section}`;
     pendingUtr.textContent = ticket.utrNumber || 'N/A';
     pendingRefId.textContent = `#${ticket.ticketId}`;
+    if (pendingAmountText) {
+      pendingAmountText.textContent = `₹${ticket.totalAmount.toLocaleString('en-IN')} (${ticket.quantity} Passes)`;
+    }
+
+    if (pendingCompanionsRow) {
+      if (ticket.companions && ticket.companions.length > 0) {
+        pendingCompanionsRow.classList.remove('hidden');
+        pendingCompanionsText.textContent = ticket.companions.map(c => c.name).join(', ');
+      } else {
+        pendingCompanionsRow.classList.add('hidden');
+      }
+    }
   }
   // 2. REJECTED STATE: Ticket is 100% hidden!
   else if (ticket.status === 'REJECTED') {
@@ -311,6 +570,26 @@ function renderApprovedTicket(ticket) {
   passUtrDisplay.textContent = ticket.utrNumber || 'N/A';
   passBarcodeText.textContent = `${ticket.ticketId}-LUDHIANA-VIP`;
 
+  if (passQuantityEl) {
+    passQuantityEl.textContent = `${ticket.quantity} ${ticket.quantity === 1 ? 'Person' : 'Persons'}`;
+  }
+  if (passPaidRate) {
+    passPaidRate.textContent = `₹${ticket.totalAmount.toLocaleString('en-IN')}`;
+  }
+
+  // Display Accompanied Guests on the Pass
+  if (passCompanionsBox) {
+    if (ticket.companions && ticket.companions.length > 0) {
+      passCompanionsBox.classList.remove('hidden');
+      if (passCompanionsCount) passCompanionsCount.textContent = ticket.companions.length;
+      if (passCompanionsListText) {
+        passCompanionsListText.textContent = ticket.companions.map((c, i) => `${i + 1}. ${c.name} (${c.grade} • ${c.sec})`).join('  |  ');
+      }
+    } else {
+      passCompanionsBox.classList.add('hidden');
+    }
+  }
+
   if (ticket.checkedIn) {
     checkInBadge.textContent = 'STATUS: CHECKED IN AT DOOR';
     checkInBadge.className = 'text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
@@ -319,12 +598,15 @@ function renderApprovedTicket(ticket) {
     checkInBadge.className = 'text-[9px] px-2 py-0.5 rounded-full font-bold bg-wine-100 text-wine-800 border border-wine-300';
   }
 
-  // Generate Scannable QR Payload
+  // Generate Scannable QR Payload (Includes primary + companions)
   const qrPayload = JSON.stringify({
     id: ticket.ticketId,
     name: ticket.fullName,
     grade: ticket.classGrade,
     sec: ticket.section,
+    passes: ticket.quantity,
+    companions: (ticket.companions || []).map(c => c.name),
+    totalAmount: ticket.totalAmount,
     utr: ticket.utrNumber,
     approvedBy: "Srishty",
     status: "VALID_ENTRY",
@@ -354,41 +636,9 @@ function generateQRCode(text) {
   }
 }
 
-// Validate payment amount - Strictly enforce exactly 2000 (disallow less or more)
-function validatePaymentAmount() {
-  if (!paymentAmountInput) return true;
-  const amt = Number(paymentAmountInput.value);
-  if (amt !== PASS_PRICE || isNaN(amt)) {
-    if (amountErrorMsg) amountErrorMsg.classList.remove('hidden');
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-    }
-    return false;
-  } else {
-    if (amountErrorMsg) amountErrorMsg.classList.add('hidden');
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-    }
-    return true;
-  }
-}
-
 // Handle Form Submission
 function handleFormSubmit(e) {
   e.preventDefault();
-
-  // Strictly validate payment amount - disallow values less or more than 2000
-  if (!validatePaymentAmount()) {
-    alert('Payment amount must be exactly ₹2,000. You cannot proceed with an amount less or more than ₹2,000.');
-    if (paymentAmountInput) {
-      paymentAmountInput.value = '2000';
-      validatePaymentAmount();
-      paymentAmountInput.focus();
-    }
-    return;
-  }
 
   const fullName = fullNameInput.value.trim();
   const classGrade = classGradeInput.value;
@@ -399,12 +649,38 @@ function handleFormSubmit(e) {
   const utr = utrNumberInput.value.trim();
 
   if (!fullName || !phone) {
-    alert('Please fill in your name and phone number.');
+    alert('Please fill in your primary name and phone number.');
     return;
   }
 
+  // Collect and validate accompanying companion details
+  const companions = [];
+  if (passQuantity > 1) {
+    const rows = companionsInputsList.querySelectorAll('.companion-row');
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const cNameInput = row.querySelector('.companion-name');
+      const cGradeSelect = row.querySelector('.companion-class');
+      const cSecSelect = row.querySelector('.companion-sec');
+
+      const cName = cNameInput ? cNameInput.value.trim() : '';
+      if (!cName) {
+        alert(`Please enter the full name for Accompanying Guest #${i + 2}.`);
+        if (cNameInput) cNameInput.focus();
+        return;
+      }
+
+      companions.push({
+        name: cName,
+        grade: cGradeSelect ? cGradeSelect.value : 'Class 10th',
+        sec: cSecSelect ? cSecSelect.value : 'Section A'
+      });
+    }
+  }
+
   if (!utr) {
-    alert('Please enter the 12-digit UPI UTR / Transaction Reference number after paying ₹2,000 to Srishty.');
+    const expected = passQuantity * PASS_PRICE;
+    alert(`Please enter the 12-digit UPI UTR / Transaction Reference number after paying ₹${expected.toLocaleString('en-IN')} to Srishty.`);
     utrNumberInput.focus();
     return;
   }
@@ -412,6 +688,7 @@ function handleFormSubmit(e) {
   // Generate unique Ticket ID
   const randomNum = Math.floor(1000 + Math.random() * 9000);
   const ticketId = `DTR-2026-X${randomNum}`;
+  const totalAmount = passQuantity * PASS_PRICE;
 
   const ticketData = {
     ticketId,
@@ -421,8 +698,9 @@ function handleFormSubmit(e) {
     phone,
     instagram,
     song,
-    quantity: 1,
-    totalAmount: PASS_PRICE, // Exactly ₹2,000
+    quantity: passQuantity,
+    companions: companions,
+    totalAmount: totalAmount, // passQuantity * 2000
     utrNumber: utr,
     paidTo: SRISHTY_UPI,
     status: 'PENDING', // 'PENDING' | 'APPROVED' | 'REJECTED'
@@ -451,7 +729,7 @@ function handleFormSubmit(e) {
   updateAdminStatsAndBadges();
 
   setTimeout(() => {
-    alert(`🎉 Registration details submitted!\n\nYour ₹2,000 payment (UTR: ${utr}) is now with Srishty for verification.\n\nYour movie pass will unlock here once Srishty approves! Tap "Send Payment Details to Srishty on WhatsApp" to notify her.`);
+    alert(`🎉 Registration details submitted!\n\nYour ₹${totalAmount.toLocaleString('en-IN')} payment (${passQuantity} Passes, UTR: ${utr}) is now with Srishty for confirmation.\n\nYour pass unlocks once Srishty approves! Tap "Send Payment Details to Srishty on WhatsApp" to notify her.`);
   }, 350);
 }
 
@@ -460,7 +738,6 @@ function handleRefreshStatus() {
   const current = getStoredCurrentTicket();
   if (!current) return;
 
-  // Refresh from all attendees database
   const attendees = getAllAttendees();
   const fresh = attendees.find(a => a.ticketId === current.ticketId);
 
@@ -469,7 +746,7 @@ function handleRefreshStatus() {
     if (fresh.status === 'APPROVED') {
       triggerConfetti();
       renderTicketPanelState();
-      alert(`🎉 Congratulations ${fresh.fullName}!\n\nSrishty has verified and APPROVED your ₹2,000 payment!\nYour official VIP Movie QR Pass is now unlocked.`);
+      alert(`🎉 Congratulations ${fresh.fullName}!\n\nSrishty has verified and APPROVED your payment of ₹${fresh.totalAmount.toLocaleString('en-IN')} (${fresh.quantity} Passes)!\nYour official VIP Movie QR Pass is now unlocked.`);
       return;
     } else if (fresh.status === 'REJECTED') {
       renderTicketPanelState();
@@ -486,14 +763,20 @@ function notifySrishtyOnWhatsApp() {
   const current = getStoredCurrentTicket();
   if (!current) return;
 
+  let companionsInfo = '';
+  if (current.companions && current.companions.length > 0) {
+    companionsInfo = `%0A👥 *Accompanying Guests (${current.companions.length}):* ` + current.companions.map(c => `${c.name} (${c.grade}-${c.sec})`).join(', ');
+  }
+
   const msg = `👑 *Payment Confirmation for Srishty* 👑%0A%0A` +
-    `Hi Srishty! I have registered for *December to Remember (Class 10th Farewell Party)* and sent ₹2,000 on UPI.%0A%0A` +
-    `👤 *Name:* ${current.fullName} (${current.classGrade} - ${current.section})%0A` +
+    `Hi Srishty! I have registered for *December to Remember (Class 10th Farewell Party)*.%0A%0A` +
+    `👤 *Primary Attendee:* ${current.fullName} (${current.classGrade} - ${current.section})%0A` +
+    `🎟️ *Passes Count:* ${current.quantity} Person(s)` + companionsInfo + `%0A` +
     `📱 *Phone:* ${current.phone}%0A` +
     `💳 *UTR / Ref:* ${current.utrNumber}%0A` +
-    `💵 *Amount:* ₹2,000 (Exact)%0A` +
-    `🎟️ *Ticket ID:* ${current.ticketId}%0A%0A` +
-    `Please approve my VIP ticket in your Admin Portal! ✨`;
+    `💵 *Total Paid:* ₹${current.totalAmount.toLocaleString('en-IN')} (Exact)%0A` +
+    `🎟️ *Ticket ID:* #${current.ticketId}%0A%0A` +
+    `Please approve our VIP pass in your Admin Portal! ✨`;
 
   window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
 }
@@ -505,8 +788,9 @@ function contactSrishtyAfterReject() {
 
   const msg = `Hi Srishty, my registration for December to Remember was marked as Rejected.%0A%0A` +
     `👤 *Name:* ${current.fullName}%0A` +
-    `🎟️ *Ref:* ${current.ticketId}%0A` +
-    `💳 *UTR:* ${current.utrNumber}%0A%0A` +
+    `🎟️ *Ref:* #${current.ticketId}%0A` +
+    `💳 *UTR:* ${current.utrNumber}%0A` +
+    `💵 *Amount:* ₹${current.totalAmount}%0A%0A` +
     `Could you please check my transaction receipt? Here is my screenshot. Thank you!`;
 
   window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
@@ -520,10 +804,8 @@ function handleReapply() {
     phoneInput.value = current.phone || '';
     if (current.instagram) instagramInput.value = current.instagram.replace(/^@/, '');
     utrNumberInput.value = '';
-    if (paymentAmountInput) {
-      paymentAmountInput.value = '2000';
-      validatePaymentAmount();
-    }
+    passQuantity = current.quantity || 1;
+    updatePassQuantityUI();
   }
   switchTab('register');
   utrNumberInput.focus();
@@ -567,13 +849,14 @@ function shareOnWhatsApp() {
 
   const msg = `🎉 *I'm coming to December to Remember!* 🎉%0A%0A` +
     `*Class 10th Farewell Party*%0A` +
-    `🎟️ *Pass ID:* ${currentTicket.ticketId}%0A` +
+    `🎟️ *Pass ID:* #${currentTicket.ticketId}%0A` +
     `👤 *Attendee:* ${currentTicket.fullName} (${currentTicket.classGrade} - ${currentTicket.section})%0A` +
+    `👥 *Passes:* ${currentTicket.quantity} Person(s)%0A` +
     `📅 *Date:* 23rd December 2026%0A` +
     `📍 *Venue:* Pyramid Lounge, Ludhiana%0A` +
     `👔 *Dress Code:* Western Theme%0A` +
     `✨ _One last dance, endless memories ♡_%0A%0A` +
-    `Register and pay ₹2,000 to Srishty to get your pass too!`;
+    `Register and pay ₹2,000 per person to Srishty to get your pass too!`;
 
   window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
 }
@@ -612,6 +895,53 @@ function lockAdmin() {
   srishtyAuthView.classList.remove('hidden');
   srishtyDashboardView.classList.add('hidden');
   adminPinInput.value = '';
+
+  const hideOnThisDevice = confirm("🔒 Srishty, do you also want to HIDE the Admin button on this device?\n\n- Click 'OK' to hide the portal completely from regular students.\n- Click 'Cancel' to keep it visible on your personal phone.");
+  if (hideOnThisDevice) {
+    localStorage.removeItem(STORAGE_AUTHORIZED_DEVICE);
+    hideAdminControls();
+    srishtyAdminModal.classList.add('hidden');
+  }
+}
+
+// Secret Gate Access Management for Srishty
+function checkAdminAccessGate() {
+  const params = new URLSearchParams(window.location.search);
+  const hash = window.location.hash.toLowerCase();
+  const hasSecretParam = params.has('srishty') || params.has('admin') || params.get('role') === 'srishty' || hash === '#srishty' || hash === '#admin';
+  const isRememberedDevice = localStorage.getItem(STORAGE_AUTHORIZED_DEVICE) === 'true';
+
+  if (hasSecretParam || isRememberedDevice) {
+    revealAdminControls();
+    if (hasSecretParam) {
+      localStorage.setItem(STORAGE_AUTHORIZED_DEVICE, 'true');
+      openSrishtyAdminModal();
+    }
+  } else {
+    hideAdminControls();
+  }
+}
+
+function revealAdminControls() {
+  if (srishtyAdminBtn) {
+    srishtyAdminBtn.classList.remove('hidden');
+    srishtyAdminBtn.classList.add('flex');
+  }
+  if (organizerBtn) {
+    organizerBtn.classList.remove('hidden');
+    organizerBtn.classList.add('flex');
+  }
+}
+
+function hideAdminControls() {
+  if (srishtyAdminBtn) {
+    srishtyAdminBtn.classList.add('hidden');
+    srishtyAdminBtn.classList.remove('flex');
+  }
+  if (organizerBtn) {
+    organizerBtn.classList.add('hidden');
+    organizerBtn.classList.remove('flex');
+  }
 }
 
 function renderAdminDashboard() {
@@ -623,7 +953,7 @@ function updateAdminStatsAndBadges() {
   const attendees = getAllAttendees();
   const pending = attendees.filter(a => a.status === 'PENDING');
   const approved = attendees.filter(a => a.status === 'APPROVED');
-  const totalAmount = approved.length * PASS_PRICE;
+  const totalAmount = approved.reduce((sum, a) => sum + (a.totalAmount || (a.quantity || 1) * PASS_PRICE), 0);
 
   // Update header badge
   if (pendingBadgeHeader) {
@@ -660,7 +990,8 @@ function renderAdminRegistrations() {
       a.fullName.toLowerCase().includes(query) ||
       (a.utrNumber && a.utrNumber.toLowerCase().includes(query)) ||
       a.ticketId.toLowerCase().includes(query) ||
-      a.phone.includes(query)
+      a.phone.includes(query) ||
+      (a.companions && a.companions.some(c => c.name.toLowerCase().includes(query)))
     );
   }
 
@@ -687,6 +1018,19 @@ function renderAdminRegistrations() {
       'border-[#e2d2c1]'
     }`;
 
+    // Companion summary for admin card
+    let companionsSummaryHtml = '';
+    if (item.companions && item.companions.length > 0) {
+      companionsSummaryHtml = `
+        <div class="pt-1.5 border-t border-champagne-300/80 text-[11px] text-wine-900">
+          <strong class="text-wine-800">Accompanied Guests (${item.companions.length}):</strong>
+          <div class="mt-0.5 space-y-0.5">
+            ${item.companions.map((c, idx) => `<div>${idx + 1}. <strong>${c.name}</strong> (${c.grade} • ${c.sec})</div>`).join('')}
+          </div>
+        </div>
+      `;
+    }
+
     card.innerHTML = `
       <div class="flex items-start justify-between gap-2">
         <div>
@@ -704,21 +1048,26 @@ function renderAdminRegistrations() {
 
       <div class="bg-champagne-50 p-2 rounded-xl text-xs space-y-1 font-mono text-[11px] border border-champagne-200">
         <div class="flex justify-between">
-          <span class="text-zinc-500">Amount:</span>
-          <strong class="text-wine-900 font-bold">₹${item.totalAmount} (Exact)</strong>
+          <span class="text-zinc-500 font-sans">Passes Count:</span>
+          <strong class="text-wine-900 font-bold font-sans">${item.quantity || 1} Person(s)</strong>
         </div>
         <div class="flex justify-between">
-          <span class="text-zinc-500">UTR / Ref:</span>
+          <span class="text-zinc-500 font-sans">Total Amount:</span>
+          <strong class="text-emerald-800 font-bold">₹${(item.totalAmount || (item.quantity || 1) * PASS_PRICE).toLocaleString('en-IN')}</strong>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-zinc-500 font-sans">UTR / Ref:</span>
           <strong class="text-wine-950 font-bold bg-amber-100/70 px-1 rounded">${item.utrNumber || 'N/A'}</strong>
         </div>
         <div class="flex justify-between">
-          <span class="text-zinc-500">Ticket ID:</span>
+          <span class="text-zinc-500 font-sans">Ticket ID:</span>
           <span class="text-zinc-700">#${item.ticketId}</span>
         </div>
         <div class="flex justify-between">
-          <span class="text-zinc-500">Phone:</span>
+          <span class="text-zinc-500 font-sans">Primary Phone:</span>
           <a href="tel:${item.phone}" class="text-wine-700 hover:underline">${item.phone}</a>
         </div>
+        ${companionsSummaryHtml}
         ${item.rejectReason ? `
           <div class="pt-1 text-[10px] text-rose-700 border-t border-rose-200">
             <strong>Rejection Reason:</strong> ${item.rejectReason}
@@ -732,7 +1081,7 @@ function renderAdminRegistrations() {
             onclick="adminApproveTicket('${item.ticketId}')"
             class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-xs flex items-center justify-center gap-1 active:scale-95"
           >
-            <span>✅ Approve & Issue Ticket</span>
+            <span>✅ Approve Passes (${item.quantity || 1})</span>
           </button>
           <button
             onclick="adminRejectTicket('${item.ticketId}')"
@@ -778,7 +1127,6 @@ window.adminApproveTicket = function(ticketId) {
 
   localStorage.setItem(STORAGE_ALL_ATTENDEES, JSON.stringify(attendees));
 
-  // If this is also the current active ticket in session, update it and reveal ticket!
   const current = getStoredCurrentTicket();
   if (current && current.ticketId === ticketId) {
     current.status = 'APPROVED';
@@ -847,7 +1195,7 @@ window.adminRevokeTicket = function(ticketId) {
   renderAdminDashboard();
 };
 
-// Door Entry Scanner Verification (Enforces Srishty's Approval check)
+// Door Entry Scanner Verification (Enforces Srishty's Approval check & Accompanying guests)
 function verifyTicketFromInput() {
   const query = scanInput.value.trim();
   if (!query) {
@@ -874,8 +1222,8 @@ function verifyTicketFromInput() {
         <div class="font-bold flex items-center gap-1.5 text-sm text-amber-900">
           <span class="text-base">⚠️</span> ENTRY DENIED — TICKET PENDING APPROVAL
         </div>
-        <div><strong>Guest:</strong> ${found.fullName} (${found.classGrade} - ${found.section})</div>
-        <div><strong>Status:</strong> Awaiting Srishty's ₹2,000 payment confirmation.</div>
+        <div><strong>Primary Guest:</strong> ${found.fullName} (${found.classGrade} - ${found.section})</div>
+        <div><strong>Status:</strong> Awaiting Srishty's ₹${found.totalAmount} payment confirmation.</div>
         <p class="text-[11px] text-amber-800 pt-1">
           Ticket has NOT been issued yet. Srishty must approve the payment before entry can be granted.
         </p>
@@ -897,13 +1245,19 @@ function verifyTicketFromInput() {
     found.checkedIn = true;
     localStorage.setItem(STORAGE_CURRENT_TICKET, JSON.stringify(found));
 
+    let companionsText = '';
+    if (found.companions && found.companions.length > 0) {
+      companionsText = `<div class="text-[11px] pt-1 border-t border-emerald-200"><strong>Admitted Companions (${found.companions.length}):</strong> ${found.companions.map(c => c.name).join(', ')}</div>`;
+    }
+
     scanResultBox.className = 'p-3 rounded-xl text-xs space-y-1 bg-emerald-50 border border-emerald-300 text-emerald-900';
     scanResultBox.innerHTML = `
       <div class="font-bold flex items-center gap-1.5 text-sm text-emerald-800">
-        <span class="text-base">✅</span> VALID PASS — ADMIT GUEST
+        <span class="text-base">✅</span> VALID PASS — ADMIT ${found.quantity} PERSON(S)
       </div>
-      <div><strong>Guest:</strong> ${found.fullName} (${found.classGrade} - ${found.section})</div>
-      <div><strong>Verified By:</strong> Srishty | <strong>Amount:</strong> ₹${found.totalAmount}</div>
+      <div><strong>Primary Guest:</strong> ${found.fullName} (${found.classGrade} - ${found.section})</div>
+      <div><strong>Verified By:</strong> Srishty | <strong>Amount Paid:</strong> ₹${found.totalAmount}</div>
+      ${companionsText}
       <div class="text-[10px] text-emerald-700 pt-1 font-mono">Status: Checked in at Pyramid Lounge door!</div>
     `;
 

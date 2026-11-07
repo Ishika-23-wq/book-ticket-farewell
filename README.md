@@ -1,56 +1,47 @@
 # 🎄 December to Remember — Class 10th Farewell Party Pass Web App
-### With Srishty's UPI QR Payment & Admin Approval System
+### With Amount-Locked UPI Payment, Multi-Guest Registration & Secret Srishty Admin Portal
 
 A mobile-first cinema ticket web application created for the **Class 10th Farewell Party: December to Remember** held at **Pyramid Lounge, Ludhiana**.
 
 ---
 
-## 💳 Payment & Approval Workflow
+## 🔒 Secret Admin Portal Access (Hidden from Regular Students)
 
-1. **Exact ₹2,000 Payment to Srishty**:
-   - Each registration requires a **strict payment of exactly ₹2,000** (no more, no less).
-   - The app features **Srishty's official UPI Payment QR Card**:
-     - **UPI ID:** `9592982012@fam`
-     - **Receiver Name:** Srishty
-     - **One-Tap Payment Button:** Deep-links directly to GPay, PhonePe, Paytm, or FamPay with the prefilled amount `₹2,000`.
-     - **Copy UPI Button:** Copies `9592982012@fam` to the clipboard.
-   - The student enters their **12-digit UPI UTR / Transaction Reference number** upon payment.
+To protect the admin controls and ensure only **Srishty** can access attendee lists and approve passes, the Admin and Gate Scanner buttons are **100% hidden by default**. Regular participants will see no trace of an admin portal.
 
-2. **Pending Approval State**:
-   - Immediately after registration, the ticket status is set to: **⏳ AWAITING SRISHTY'S APPROVAL**.
-   - The movie ticket QR pass is **locked** and watermarked until Srishty confirms the payment.
-   - A direct button allows the attendee to send their payment proof and UTR to **Srishty on WhatsApp** with a pre-filled confirmation message.
+### How Srishty Can Access Her Admin Portal:
 
-3. **👑 Srishty's Organizer Admin Portal**:
-   - Accessible via the **"👑 Srishty Admin"** button in the header.
-   - Protected by a PIN (default: `2026`).
-   - Displays real-time stats:
-     - **Pending Approvals Queue** with live counter badge.
-     - **Total Confirmed Attendees**.
-     - **Total Collected Revenue** (`₹2,000 × count`).
-   - Srishty can:
-     - Review the student's name, class, phone number, and UTR number.
-     - Chat directly with the student on WhatsApp.
-     - Click **✅ Approve & Issue Pass**:
-       - Instantly unlocks the movie-ticket QR pass.
-       - Triggers celebration confetti.
-       - Enables high-resolution ticket download.
-     - Click **❌ Reject**: If the UTR or amount doesn't match.
+1. **Method 1: Direct Private Link (Recommended)**
+   - Srishty opens the web app with the secret parameter:
+     👉 **`http://localhost:3000/?admin=srishty`** (or `?srishty` / `#admin`)
+   - The app automatically unlocks and remembers Srishty's device. On her phone, the **👑 Srishty Admin** button will remain available.
 
-4. **Door Gate Scanner**:
-   - Pyramid Lounge security can simulate scanning tickets at the door.
-   - If an attendee's payment is still pending Srishty's review, entry is **denied**.
-   - Once Srishty approves, the pass scans as **VALID** and checks the attendee into the lounge.
+2. **Method 2: Secret Triple-Tap Gesture (Works on Any Device)**
+   - On any phone or browser, quickly **tap the top header title ("DECEMBER TO REMEMBER" or "✦" badge) 3 times**.
+   - This secretly unlocks the portal and prompts for Srishty's PIN (`2026`).
+
+3. **Locking & Hiding**:
+   - When Srishty finishes reviewing, she can click **Lock**. The app asks if she wants to hide the admin button again on that device.
 
 ---
 
-## 🚀 How to Run Locally
+## 👥 Multi-Guest Group Booking & Automatic Price Locking
 
-You can preview the app right now in any browser at:
-👉 **[http://localhost:3000](http://localhost:3000)**
+- **Pass Counter**: Participants can book for 1 to 5 people using `+` / `-`.
+- **Accompanying Guest Details**: When 2+ passes are selected, dynamic input cards appear for each companion (Full Name, Class & Section).
+- **Auto-Calculated Amount**:
+  - 1 Person: ₹2,000
+  - 2 People: ₹4,000
+  - 3 People: ₹6,000
+  - 4 People: ₹8,000
+  - 5 People: ₹10,000
+- **Locked UPI Link & Dynamic QR Code**: Pre-fills the exact total sum in GPay, PhonePe, and Paytm so users cannot alter the amount.
+- **Strict Validation**: Less or more than the calculated exact total is blocked.
 
-Or start the server anytime:
-```bash
-cd /Users/ishika/Documents/Github/december-to-remember-tickets
-python3 -m http.server 3000
-```
+---
+
+## 🎟️ Ticket Approval Workflow
+
+- **Pending State**: The cinema pass and QR code are completely hidden. Attendees see an *"Application Under Review"* card with a direct WhatsApp notification button to Srishty.
+- **Rejected State**: If rejected, a dedicated screen displays Srishty's exact reason.
+- **Approved State**: Once Srishty clicks **Approve**, the movie ticket pass unlocks with perforated tear lines, dynamic entry QR code, all companion names, and retina download.

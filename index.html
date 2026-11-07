@@ -79,7 +79,8 @@
     
     <!-- Top Navigation Bar -->
     <header class="sticky top-0 z-40 bg-[#FDFBF7]/95 backdrop-blur-md border-b border-[#ebd8c5] px-4 py-3 flex items-center justify-between shadow-sm">
-      <div class="flex items-center space-x-2">
+      <!-- Secret Tap Area for Srishty (Triple-tap here to unlock Admin Portal) -->
+      <div id="secretAdminTapArea" class="flex items-center space-x-2 cursor-pointer select-none active:opacity-75 transition" title="December to Remember">
         <span class="w-8 h-8 rounded-full bg-wine-700 text-gold-300 flex items-center justify-center font-serif text-sm font-bold shadow-inner">
           ✦
         </span>
@@ -89,7 +90,8 @@
         </div>
       </div>
       <div class="flex items-center space-x-1.5">
-        <button id="srishtyAdminBtn" title="Srishty Admin Portal" class="text-xs bg-gold-400/20 hover:bg-gold-400/30 text-wine-900 font-semibold px-2.5 py-1.5 rounded-full transition flex items-center gap-1 border border-gold-500/40 relative">
+        <!-- Srishty Admin Button (HIDDEN BY DEFAULT FROM REGULAR STUDENTS) -->
+        <button id="srishtyAdminBtn" title="Srishty Admin Portal" class="hidden text-xs bg-gold-400/20 hover:bg-gold-400/30 text-wine-900 font-semibold px-2.5 py-1.5 rounded-full transition items-center gap-1 border border-gold-500/40 relative">
           <span class="text-xs">👑</span>
           <span>Srishty Admin</span>
           <span id="pendingBadgeHeader" class="hidden min-w-[16px] h-4 text-[9px] font-bold bg-rose-600 text-white rounded-full px-1 flex items-center justify-center">0</span>
@@ -98,7 +100,8 @@
           <i data-lucide="ticket" class="w-3.5 h-3.5"></i>
           <span>My Pass</span>
         </button>
-        <button id="organizerBtn" title="Organizer Gate Scanner" class="w-8 h-8 rounded-full hover:bg-[#F2E5D5] flex items-center justify-center text-wine-800 transition">
+        <!-- Gate Scanner Button (Only visible to Srishty/Admin) -->
+        <button id="organizerBtn" title="Gate Entry Scanner" class="hidden w-8 h-8 rounded-full hover:bg-[#F2E5D5] items-center justify-center text-wine-800 transition">
           <i data-lucide="scan-line" class="w-4 h-4"></i>
         </button>
       </div>
@@ -363,15 +366,32 @@
                 </div>
               </div>
 
-              <!-- Number of Passes & Strict Amount Notice -->
-              <div class="p-3 bg-champagne-100/60 rounded-xl border border-[#eedcca] flex items-center justify-between">
-                <div>
-                  <span class="block text-xs font-bold text-wine-900">Farewell Party Pass</span>
-                  <span class="text-[11px] text-wine-700">Class 10th VIP Entry • Non-transferable</span>
+              <!-- Number of Passes & Companion Counter -->
+              <div class="p-3.5 bg-champagne-100/70 rounded-2xl border border-[#eedcca] space-y-3">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="block text-xs font-bold text-wine-900">Total Participants</span>
+                    <span class="text-[11px] text-wine-700">₹2,000 per person • Multiple guests allowed</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" id="decreasePasses" class="w-8 h-8 rounded-xl bg-white border border-[#d6c4a8] text-wine-900 font-bold flex items-center justify-center hover:bg-wine-50 active:scale-95 transition shadow-xs text-sm">-</button>
+                    <span id="passCount" class="font-serif font-black text-base text-wine-900 min-w-6 text-center">1</span>
+                    <button type="button" id="increasePasses" class="w-8 h-8 rounded-xl bg-white border border-[#d6c4a8] text-wine-900 font-bold flex items-center justify-center hover:bg-wine-50 active:scale-95 transition shadow-xs text-sm">+</button>
+                  </div>
                 </div>
-                <div class="text-right">
-                  <span class="font-serif font-black text-base text-wine-900">₹2,000</span>
-                  <span class="block text-[9px] uppercase tracking-wider text-wine-600 font-bold">Strictly Exact Amount</span>
+
+                <!-- Dynamic Accompanying Guests Container (Appears when 2+ passes selected) -->
+                <div id="companionsSection" class="hidden pt-3 border-t border-[#e2d0bf] space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-wine-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <i data-lucide="users" class="w-3.5 h-3.5 text-wine-700"></i>
+                      <span>Accompanying Guests' Details</span>
+                    </span>
+                    <span class="text-[10px] text-wine-600 italic">Required for lounge entry</span>
+                  </div>
+                  
+                  <!-- Dynamic Guest Cards Injected by JS -->
+                  <div id="companionsInputsList" class="space-y-2.5"></div>
                 </div>
               </div>
 
@@ -399,8 +419,8 @@
                       ₹
                     </span>
                     <div>
-                      <h4 class="font-serif font-bold text-wine-900 text-sm">Scan QR & Pay Srishty</h4>
-                      <p class="text-[10px] text-wine-600 font-medium">Exact ₹2,000 payment required</p>
+                      <h4 class="font-serif font-bold text-wine-900 text-sm">Pay Srishty via UPI</h4>
+                      <p id="subPaymentSubtitle" class="text-[10px] text-wine-600 font-medium">Exact ₹2,000 payment required</p>
                     </div>
                   </div>
                   <span class="text-[10px] bg-wine-100 text-wine-800 font-bold px-2 py-0.5 rounded-full border border-wine-300">
@@ -408,60 +428,89 @@
                   </span>
                 </div>
 
-                <!-- Srishty QR Card Box -->
-                <div class="bg-gradient-to-b from-[#1c1917] to-[#120f0e] text-white p-4 rounded-2xl shadow-md border border-[#3e342f] text-center space-y-2.5">
-                  <div class="flex items-center justify-center gap-1 text-gold-300 text-xs font-semibold">
-                    <span>👑</span>
-                    <span class="font-serif tracking-wide">Srishty's Official UPI QR</span>
+                <!-- Srishty Amount-Protected Payment Box -->
+                <div class="bg-gradient-to-b from-[#1c1917] to-[#120f0e] text-white p-4 rounded-2xl shadow-md border border-[#3e342f] text-center space-y-3">
+                  <div class="flex items-center justify-between border-b border-white/10 pb-2">
+                    <div class="flex items-center gap-1.5 text-gold-300 text-xs font-semibold">
+                      <span>👑</span>
+                      <span class="font-serif tracking-wide">Pay Srishty (Lead Organizer)</span>
+                    </div>
+                    <span id="payLockedAmountBadge" class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold px-2 py-0.5 rounded-full">
+                      🔒 Total: ₹2,000 Locked
+                    </span>
                   </div>
 
-                  <!-- QR Image -->
-                  <div class="relative inline-block mx-auto rounded-xl overflow-hidden border-2 border-gold-400/40 shadow-lg bg-black">
-                    <img
-                      src="assets/srishty-qr.jpg"
-                      alt="Srishty UPI Payment QR Code"
-                      class="w-48 h-auto max-h-56 object-contain mx-auto"
-                    />
+                  <!-- Direct Mobile 1-Tap UPI Button (Pre-fills & locks exact total amount in payment apps) -->
+                  <div>
+                    <a
+                      id="upiPayLinkBtn"
+                      href="upi://pay?pa=9592982012@fam&pn=Srishty&am=2000.00&cu=INR&tn=December%20To%20Remember%20Pass%20Fee"
+                      class="inline-flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-600 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-bold rounded-xl transition shadow-lg border border-emerald-500/40 active:scale-95"
+                    >
+                      <i data-lucide="zap" class="w-4 h-4 text-gold-300"></i>
+                      <span id="upiPayBtnText">Tap to Pay ₹2,000 via UPI (GPay / PhonePe / Paytm)</span>
+                    </a>
+                    <p id="upiLockedNote" class="text-[10px] text-zinc-400 mt-1">
+                      Opens your payment app with the amount <strong>automatically locked to ₹2,000</strong>.
+                    </p>
                   </div>
 
-                  <!-- UPI ID & Copy button -->
-                  <div class="bg-white/10 rounded-xl p-2 flex items-center justify-between gap-2 max-w-xs mx-auto border border-white/10">
-                    <div class="text-left">
-                      <span class="block text-[9px] uppercase tracking-wider text-zinc-400">UPI ID</span>
+                  <!-- Option 2: Copy UPI ID -->
+                  <div class="bg-white/10 rounded-xl p-2.5 flex items-center justify-between gap-2 border border-white/10 text-left">
+                    <div>
+                      <span class="block text-[9px] uppercase tracking-wider text-zinc-400">Srishty's UPI ID</span>
                       <span id="srishtyUpiText" class="font-mono text-xs font-bold text-gold-300">9592982012@fam</span>
                     </div>
                     <button
                       type="button"
                       id="copyUpiBtn"
-                      class="px-2.5 py-1 bg-gold-500 hover:bg-gold-600 text-wine-950 text-xs font-bold rounded-lg transition active:scale-95 flex items-center gap-1 shrink-0"
+                      class="px-3 py-1.5 bg-gold-500 hover:bg-gold-600 text-wine-950 text-xs font-bold rounded-lg transition active:scale-95 flex items-center gap-1 shrink-0"
                     >
                       <i data-lucide="copy" class="w-3 h-3"></i>
-                      <span id="copyUpiLabel">Copy</span>
+                      <span id="copyUpiLabel">Copy ID</span>
                     </button>
                   </div>
 
-                  <!-- Mobile One-Tap Pay Link -->
-                  <a
-                    href="upi://pay?pa=9592982012@fam&pn=Srishty&am=2000&cu=INR&tn=December%20to%20Remember%20Farewell%20Pass"
-                    class="inline-flex items-center justify-center gap-1.5 w-full py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-bold rounded-xl transition shadow-sm active:scale-95"
-                  >
-                    <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
-                    <span>Pay ₹2,000 on GPay / PhonePe / Paytm</span>
-                  </a>
+                  <!-- Option 3: Amount-Locked Dynamic QR Code (Replaces the raw FamPay image) -->
+                  <div class="pt-1">
+                    <button
+                      type="button"
+                      id="toggleLockedQrBtn"
+                      class="inline-flex items-center justify-center gap-1.5 w-full py-2 bg-white/5 hover:bg-white/10 text-gold-200 text-xs font-medium rounded-xl transition border border-white/10"
+                    >
+                      <i data-lucide="qr-code" class="w-3.5 h-3.5 text-gold-400"></i>
+                      <span id="toggleQrLabel">Show Amount-Locked QR Code</span>
+                      <i data-lucide="chevron-down" id="toggleQrIcon" class="w-3.5 h-3.5 transition-transform duration-200"></i>
+                    </button>
 
-                  <p class="text-[9px] text-zinc-400 leading-tight">
-                    Official Farewell Pass Fee: <strong>₹2,000</strong>
-                  </p>
+                    <!-- Dynamic Amount-Locked QR Display (Hidden by default, toggled on demand) -->
+                    <div id="lockedQrContainer" class="hidden p-3.5 bg-white rounded-2xl text-center space-y-2.5 mt-2.5 border border-zinc-200 shadow-md">
+                      <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-900 border border-emerald-300 text-[10px] font-bold">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                        <span id="qrLockedBadgeText">Pre-set Amount: ₹2,000 (Non-editable)</span>
+                      </div>
+                      
+                      <!-- Live Dynamic QR container -->
+                      <div class="p-2 bg-[#FAF6F0] rounded-xl border border-zinc-200 inline-block mx-auto shadow-inner">
+                        <div id="srishtyDynamicQr" class="w-[140px] h-[140px] flex items-center justify-center mx-auto"></div>
+                      </div>
+
+                      <p id="qrScanHelpText" class="text-[10px] text-zinc-600 leading-tight">
+                        Scanning this QR code with Google Pay, PhonePe, or Paytm automatically fixes the payment to <strong>strictly ₹2,000</strong>.
+                      </p>
+                    </div>
+                  </div>
+
                 </div>
 
                 <!-- Payment Amount & UPI UTR in a clean layout -->
                 <div class="space-y-3">
-                  <!-- Payment Amount Field (Strictly locked & validated to 2000) -->
+                  <!-- Payment Amount Field (Strictly locked & validated to passQuantity * 2000) -->
                   <div>
                     <label for="paymentAmount" class="block text-xs font-semibold text-wine-900 mb-1 flex items-center justify-between">
-                      <span>Pass Payment Amount (₹) *</span>
-                      <span class="text-[10px] text-emerald-800 font-bold bg-emerald-100/70 px-2 py-0.5 rounded-full border border-emerald-300">
-                        Fixed at ₹2,000
+                      <span>Total Pass Amount (₹) *</span>
+                      <span id="fixedAmountLabel" class="text-[10px] text-emerald-800 font-bold bg-emerald-100/70 px-2 py-0.5 rounded-full border border-emerald-300">
+                        Fixed at ₹2,000 (1 Person)
                       </span>
                     </label>
                     <div class="relative">
@@ -470,6 +519,19 @@
                       </div>
                       <input
                         type="number"
+                        id="paymentAmount"
+                        required
+                        value="2000"
+                        readonly
+                        class="w-full pl-8 pr-3 py-2.5 bg-champagne-50/70 border border-[#dbcaa7] rounded-xl text-sm font-bold text-wine-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-wine-600 transition"
+                      />
+                    </div>
+                    <!-- Inline validation error if amount != passQuantity * 2000 -->
+                    <p id="amountErrorMsg" class="hidden text-[11px] text-rose-700 font-bold mt-1.5 p-2 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-1.5">
+                      <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>
+                      <span id="amountErrorText">Amount must match the exact total for your selected passes.</span>
+                    </p>
+                  </div>
                         id="paymentAmount"
                         required
                         value="2000"
@@ -620,9 +682,13 @@
                   <span class="text-zinc-500 font-sans">Class & Section:</span>
                   <span id="pendingGradeSec" class="font-bold text-wine-900 font-sans">--</span>
                 </div>
+                <div id="pendingCompanionsRow" class="hidden flex justify-between items-center pb-1.5 border-b border-zinc-100">
+                  <span class="text-zinc-500 font-sans">Companions:</span>
+                  <span id="pendingCompanionsText" class="font-bold text-wine-900 font-sans text-right truncate max-w-[190px]">--</span>
+                </div>
                 <div class="flex justify-between items-center pb-1.5 border-b border-zinc-100">
-                  <span class="text-zinc-500 font-sans">Payment Amount:</span>
-                  <span class="font-bold text-emerald-800 font-sans">₹2,000 (Exact)</span>
+                  <span class="text-zinc-500 font-sans">Total Amount:</span>
+                  <span id="pendingAmountText" class="font-bold text-emerald-800 font-sans">₹2,000</span>
                 </div>
                 <div class="flex justify-between items-center pb-1.5 border-b border-zinc-100">
                   <span class="text-zinc-500 font-sans">Submitted UTR:</span>
@@ -796,12 +862,23 @@
                 <!-- Attendee Details -->
                 <div class="grid grid-cols-2 gap-3 text-left">
                   <div>
-                    <div class="text-[10px] uppercase font-bold text-wine-600 tracking-wider">GUEST NAME</div>
+                    <div class="text-[10px] uppercase font-bold text-wine-600 tracking-wider">PRIMARY GUEST</div>
                     <div id="passGuestName" class="font-serif font-bold text-base text-wine-950 truncate">Ishika Sharma</div>
                   </div>
                   <div>
                     <div class="text-[10px] uppercase font-bold text-wine-600 tracking-wider">CLASS & SECTION</div>
                     <div id="passGradeSec" class="font-serif font-bold text-base text-wine-950">Class 10th • Sec A</div>
+                  </div>
+                </div>
+
+                <!-- Accompanying Companions List (Visible if pass count > 1) -->
+                <div id="passCompanionsBox" class="hidden p-2.5 bg-white/90 rounded-xl border border-[#e8d5be] text-left text-xs space-y-1">
+                  <div class="flex items-center justify-between text-[10px] font-bold text-wine-700 uppercase tracking-wider">
+                    <span>ACCOMPANYING GUESTS (<span id="passCompanionsCount">0</span>)</span>
+                    <span class="text-emerald-700">ADMITTED</span>
+                  </div>
+                  <div id="passCompanionsListText" class="font-sans text-wine-950 text-xs font-semibold leading-relaxed">
+                    --
                   </div>
                 </div>
 
@@ -812,8 +889,8 @@
                     <span class="font-serif font-bold text-wine-900 text-xs">23 DEC 2026</span>
                   </div>
                   <div class="border-x border-zinc-200">
-                    <span class="block text-[9px] uppercase font-bold text-zinc-500">TIME</span>
-                    <span class="font-serif font-bold text-wine-900 text-xs">6:00 PM</span>
+                    <span class="block text-[9px] uppercase font-bold text-zinc-500">ADMIT</span>
+                    <span id="passQuantity" class="font-serif font-bold text-wine-900 text-xs">1 Person</span>
                   </div>
                   <div>
                     <span class="block text-[9px] uppercase font-bold text-zinc-500">UTR REF</span>
@@ -876,7 +953,7 @@
 
               <!-- Footer Strip -->
               <div class="bg-[#ECE3D5] px-4 py-2 text-center text-[10px] text-wine-800 border-t border-[#d8c3ad] font-medium flex items-center justify-between">
-                <span>Pass Rate: <strong class="font-bold">₹2,000 (Exact)</strong></span>
+                <span>Total Paid: <strong id="passPaidRate" class="font-bold">₹2,000</strong></span>
                 <span id="approvalByFooter" class="text-[9px] text-emerald-800 font-bold">Approved by Srishty (Lead Org)</span>
               </div>
             </div>
