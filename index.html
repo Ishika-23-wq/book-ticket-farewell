@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>December to Remember — Class 10th Farewell Party Pass</title>
+  
+  <!-- Favicon / Meta -->
+  <meta name="description" content="Book your VIP Movie-style Pass for Class 10th Farewell Party: December to Remember at Pyramid Lounge, Ludhiana." />
+  <meta name="theme-color" content="#72101F" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            wine: {
+              900: '#3E0811',
+              800: '#560B17',
+              700: '#72101F',
+              600: '#8E1729',
+              500: '#AB2338',
+              100: '#FBECEE',
+              50: '#FDF5F6',
+            },
+            champagne: {
+              50: '#FDFBF7',
+              100: '#F8F2E8',
+              200: '#EFE2D0',
+              300: '#E3CFB4',
+              400: '#CDB187',
+              500: '#B6935C',
+            },
+            gold: {
+              300: '#F2D785',
+              400: '#E6C35C',
+              500: '#CCA028',
+              600: '#A67F19',
+              700: '#7E5F0E',
+            }
+          },
+          fontFamily: {
+            serif: ['"Playfair Display"', 'Georgia', 'serif'],
+            cursive: ['"Alex Brush"', 'cursive'],
+            display: ['"Cinzel"', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cinzel:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,400;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <!-- HTML2Canvas (for ticket image download) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-[#1a0508] text-[#2c1316] antialiased selection:bg-[#72101F] selection:text-white min-h-screen">
+
+  <!-- Mobile App Wrapper -->
+  <div class="max-w-[480px] mx-auto min-h-screen bg-[#FDFBF7] shadow-2xl relative flex flex-col overflow-x-hidden border-x border-[#eddccb]">
+    
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-40 bg-[#FDFBF7]/95 backdrop-blur-md border-b border-[#ebd8c5] px-4 py-3 flex items-center justify-between shadow-sm">
+      <div class="flex items-center space-x-2">
+        <span class="w-8 h-8 rounded-full bg-wine-700 text-gold-300 flex items-center justify-center font-serif text-sm font-bold shadow-inner">
+          ✦
+        </span>
+        <div>
+          <h1 class="font-serif font-bold text-wine-900 text-sm tracking-wide leading-tight">DECEMBER TO REMEMBER</h1>
+          <p class="text-[10px] text-wine-600 tracking-wider uppercase font-semibold">Class 10th Farewell • Ludhiana</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-1.5">
+        <button id="viewMyTicketBtn" class="hidden text-xs bg-wine-100 hover:bg-wine-200 text-wine-800 font-medium px-2.5 py-1.5 rounded-full transition flex items-center gap-1 border border-wine-300">
+          <i data-lucide="ticket" class="w-3.5 h-3.5"></i>
+          <span>My Pass</span>
+        </button>
+        <button id="organizerBtn" title="Organizer Gate Scanner" class="w-8 h-8 rounded-full hover:bg-[#F2E5D5] flex items-center justify-center text-wine-800 transition">
+          <i data-lucide="scan-line" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Tabs -->
+    <main class="flex-1 pb-24">
+
+      <!-- ==============================================
+           HERO SECTION: Flyer Style
+      =============================================== -->
+      <section class="relative px-5 pt-6 pb-6 text-center bg-gradient-to-b from-[#F9EFE3] via-[#FDFBF7] to-[#FDFBF7] border-b border-[#eeddcb] overflow-hidden">
+        
+        <!-- Festive Corner Ornaments Background SVGs -->
+        <div class="absolute -top-6 -left-6 w-32 h-32 opacity-80 pointer-events-none transform -rotate-12">
+          <svg viewBox="0 0 100 100" fill="none" class="w-full h-full text-wine-800">
+            <!-- Pine needles & ribbon flourish -->
+            <path d="M10 10 C30 5, 60 20, 80 10 C70 30, 85 60, 90 90" stroke="#72101F" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="28" cy="42" r="9" fill="#72101F" />
+            <circle cx="28" cy="42" r="7" fill="#8E1729" />
+            <circle cx="26" cy="40" r="2.5" fill="#F2D785" />
+            <circle cx="62" cy="24" r="12" fill="#C59B48" />
+            <circle cx="62" cy="24" r="10" fill="#CCA028" />
+            <circle cx="59" cy="21" r="3" fill="#FFF7DE" />
+          </svg>
+        </div>
+
+        <div class="absolute -top-8 -right-8 w-36 h-36 opacity-85 pointer-events-none">
+          <!-- Satin Ribbon Bow illustration -->
+          <svg viewBox="0 0 120 120" fill="none" class="w-full h-full">
+            <path d="M60 25 C45 5, 20 15, 30 35 C40 50, 60 40, 60 40 C60 40, 80 50, 90 35 C100 15, 75 5, 60 25 Z" fill="#72101F" stroke="#560B17" stroke-width="2"/>
+            <circle cx="60" cy="36" r="6" fill="#8E1729" stroke="#E6C35C" stroke-width="1.5"/>
+            <path d="M56 42 Q40 70 20 85 Q32 80 44 95 Q52 75 58 42" fill="#72101F"/>
+            <path d="M64 42 Q80 70 100 85 Q88 80 76 95 Q68 75 62 42" fill="#72101F"/>
+          </svg>
+        </div>
+
+        <!-- Subtitle Badge -->
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-wine-50 border border-wine-200/80 mb-3 shadow-xs">
+          <span class="text-gold-600 text-xs font-bold">✦</span>
+          <span class="text-[11px] font-semibold text-wine-800 uppercase tracking-widest font-sans">YOU'RE INVITED TO</span>
+          <span class="text-gold-600 text-xs font-bold">✦</span>
+        </div>
+
+        <!-- Main Title (Poster Replica) -->
+        <div class="relative py-1">
+          <div class="font-cursive text-5xl md:text-6xl text-wine-800 drop-shadow-xs -mb-3 tracking-normal">
+            December to
+          </div>
+          <h2 class="font-serif text-4xl sm:text-5xl font-black text-wine-900 tracking-tight uppercase leading-none drop-shadow-sm">
+            REMEMBER
+          </h2>
+        </div>
+
+        <!-- Ribbon Banner: Farewell Party -->
+        <div class="relative my-4 flex justify-center items-center">
+          <div class="ribbon-banner px-8 py-2 bg-gradient-to-r from-wine-800 via-wine-700 to-wine-800 text-gold-300 font-serif text-lg md:text-xl font-bold tracking-wider shadow-lg rounded-sm border-y border-gold-400/40 relative">
+            <span class="text-gold-400 mr-2 text-sm">✦</span>
+            Farewell Party
+            <span class="text-gold-400 ml-2 text-sm">✦</span>
+          </div>
+        </div>
+
+        <p class="font-cursive text-2xl text-wine-800 tracking-wide font-normal -mt-1">
+          For Class 10th Girls and Boys
+        </p>
+
+        <p class="font-serif italic text-wine-900/90 text-sm mt-1.5 font-medium flex items-center justify-center gap-1.5">
+          <span>One last dance, endless memories</span>
+          <span class="text-wine-600">♡</span>
+        </p>
+
+        <!-- Quick Details Badges (3 Column Grid like Flyer) -->
+        <div class="mt-5 grid grid-cols-3 gap-2 border-t border-b border-wine-900/15 py-3.5 bg-champagne-100/50 rounded-xl">
+          <!-- Date -->
+          <div class="flex flex-col items-center justify-center px-1 border-r border-wine-900/10">
+            <i data-lucide="calendar" class="w-4 h-4 text-wine-700 mb-1"></i>
+            <span class="text-[9px] uppercase tracking-wider font-bold text-wine-600">DATE:</span>
+            <span class="font-serif font-black text-xs sm:text-sm text-wine-900 leading-tight mt-0.5">23<sup>rd</sup> DEC</span>
+            <span class="text-[11px] font-bold text-wine-800">2026</span>
+          </div>
+
+          <!-- Venue -->
+          <div class="flex flex-col items-center justify-center px-1 border-r border-wine-900/10">
+            <i data-lucide="map-pin" class="w-4 h-4 text-wine-700 mb-1"></i>
+            <span class="text-[9px] uppercase tracking-wider font-bold text-wine-600">VENUE:</span>
+            <span class="font-serif font-bold text-xs sm:text-sm text-wine-900 leading-tight mt-0.5">Pyramid Lounge</span>
+            <span class="text-[9px] text-wine-700 line-clamp-1">Sarabha Nagar</span>
+          </div>
+
+          <!-- Pass Rate -->
+          <div class="flex flex-col items-center justify-center px-1">
+            <i data-lucide="ticket" class="w-4 h-4 text-wine-700 mb-1"></i>
+            <span class="text-[9px] uppercase tracking-wider font-bold text-wine-600">PASS RATE:</span>
+            <div class="mt-0.5 px-2 py-0.5 bg-wine-800 text-gold-300 font-serif font-black text-xs sm:text-sm rounded-full shadow-xs border border-gold-400/40">
+              ₹2,000
+            </div>
+          </div>
+        </div>
+
+        <!-- Dress Code & Tagline -->
+        <div class="mt-3 flex items-center justify-between text-xs px-2">
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wine-100/80 text-wine-900 border border-wine-200">
+            <span class="text-[10px] uppercase font-bold text-wine-600">Dress Code:</span>
+            <span class="font-serif italic font-bold">Western Theme ✨</span>
+          </div>
+          <div class="text-[11px] font-semibold text-wine-700 flex items-center gap-1">
+            <i data-lucide="instagram" class="w-3.5 h-3.5 text-wine-700"></i>
+            <span>@DECEMBER_TO_REMEMBER_67</span>
+          </div>
+        </div>
+
+        <!-- Live Countdown Timer -->
+        <div class="mt-4 p-2.5 rounded-xl bg-gradient-to-r from-wine-900 via-wine-800 to-wine-900 text-white shadow-md border border-gold-500/30">
+          <div class="text-[10px] uppercase tracking-widest text-gold-300 font-semibold mb-1">Farewell Countdown</div>
+          <div id="countdown" class="grid grid-cols-4 gap-1 text-center font-serif">
+            <div class="bg-black/30 rounded p-1">
+              <span id="cd-days" class="text-base font-bold text-gold-200">--</span>
+              <span class="block text-[8px] uppercase tracking-wider text-wine-100/70">Days</span>
+            </div>
+            <div class="bg-black/30 rounded p-1">
+              <span id="cd-hours" class="text-base font-bold text-gold-200">--</span>
+              <span class="block text-[8px] uppercase tracking-wider text-wine-100/70">Hours</span>
+            </div>
+            <div class="bg-black/30 rounded p-1">
+              <span id="cd-mins" class="text-base font-bold text-gold-200">--</span>
+              <span class="block text-[8px] uppercase tracking-wider text-wine-100/70">Mins</span>
+            </div>
+            <div class="bg-black/30 rounded p-1">
+              <span id="cd-secs" class="text-base font-bold text-gold-200">--</span>
+              <span class="block text-[8px] uppercase tracking-wider text-wine-100/70">Secs</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- View Poster Trigger -->
+        <button id="openPosterBtn" type="button" class="mt-3.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 hover:bg-white text-wine-900 border border-wine-200/80 text-[11px] font-semibold shadow-xs transition active:scale-95">
+          <i data-lucide="image" class="w-3.5 h-3.5 text-wine-700"></i>
+          <span>View Original Invitation Card</span>
+          <i data-lucide="chevron-right" class="w-3 h-3 text-wine-400"></i>
+        </button>
+
+      </section>
+
+      <!-- ==============================================
+           SECTION: VIEW TICKETS / REGISTRATION TOGGLE
+      =============================================== -->
+      <section class="px-5 pt-5">
+        
+        <!-- Tab Pill Switcher -->
+        <div class="flex p-1 bg-[#F1E5D7] rounded-xl border border-[#decab5] mb-5">
+          <button id="tabRegisterBtn" class="flex-1 py-2 text-xs font-bold rounded-lg transition duration-200 bg-wine-700 text-white shadow-sm flex items-center justify-center gap-1.5">
+            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+            <span>Register & Get Pass</span>
+          </button>
+          <button id="tabTicketBtn" class="flex-1 py-2 text-xs font-bold rounded-lg transition duration-200 text-wine-900 hover:text-wine-700 flex items-center justify-center gap-1.5">
+            <i data-lucide="qr-code" class="w-3.5 h-3.5"></i>
+            <span>My QR Pass</span>
+          </button>
+        </div>
+
+        <!-- ==============================================
+             PANEL 1: REGISTRATION FORM
+        =============================================== -->
+        <div id="registerPanel" class="space-y-5">
+          
+          <div class="bg-white rounded-2xl p-5 shadow-sm border border-[#e8d8c7]">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-7 h-7 rounded-full bg-wine-100 flex items-center justify-center text-wine-700">
+                <i data-lucide="user-check" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="font-serif font-bold text-wine-900 text-base">Participant RSVP Details</h3>
+                <p class="text-[11px] text-[#7d565b]">Enter your info to generate your cinema-style entry pass</p>
+              </div>
+            </div>
+
+            <form id="bookingForm" class="space-y-4">
+              <!-- Full Name -->
+              <div>
+                <label for="fullName" class="block text-xs font-semibold text-wine-900 mb-1 flex items-center justify-between">
+                  <span>Full Name *</span>
+                  <span class="text-[10px] text-wine-600 font-normal">As to appear on pass</span>
+                </label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-wine-400">
+                    <i data-lucide="user" class="w-4 h-4"></i>
+                  </div>
+                  <input
+                    type="text"
+                    id="fullName"
+                    required
+                    placeholder="e.g. Ishika Sharma"
+                    class="w-full pl-9 pr-3 py-2.5 bg-champagne-50/70 border border-[#dbcaa7] rounded-xl text-sm text-wine-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-wine-600 focus:border-transparent transition"
+                  />
+                </div>
+              </div>
+
+              <!-- Class & Section -->
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label for="classGrade" class="block text-xs font-semibold text-wine-900 mb-1">Class *</label>
+                  <select
+                    id="classGrade"
+                    required
+                    class="w-full px-3 py-2.5 bg-champagne-50/70 border border-[#dbcaa7] rounded-xl text-sm text-wine-900 focus:outline-none focus:ring-2 focus:ring-wine-600"
+                  >
+                    <option value="Class 10th">Class 10th</option>
+                    <option value="Class 10th Alumni">Class 10th Alumni</option>
+                    <option value="Special Guest">Special Guest</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label for="section" class="block text-xs font-semibold text-wine-900 mb-1">Section *</label>
+                  <select
+                    id="section"
+                    required
+                    class="w-full px-3 py-2.5 bg-champagne-50/70 border border-[#dbcaa7] rounded-xl text-sm text-wine-900 focus:outline-none focus:ring-2 focus:ring-wine-600"
+                  >
+                    <option value="Section A">Section A</option>
+                    <option value="Section B">Section B</option>
+                    <option value="Section C">Section C</option>
+                    <option value="Section D">Section D</option>
+                    <option value="Section E">Section E</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Phone & Instagram -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label for="phoneNumber" class="block text-xs font-semibold text-wine-900 mb-1">WhatsApp / Phone *</label>
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-wine-400">
+                      <i data-lucide="phone" class="w-4 h-4"></i>
+                    </div>
+                    <input
+                      type="tel"
+                      id="phoneNumber"
+                      required
+                      placeholder="+91 98765 43210"
+                      class="w-full pl-9 pr-3 py-2.5 bg-champagne-50/70 border border-[#dbcaa7] rounded-xl text-sm text-wine-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-wine-600"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label for="instagramHandle" class="block text-xs font-semibold text-wine-900 mb-1">Instagram Handle</label>
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-wine-400">
+                      <span class="text-xs font-bold">@</span>
+                    </div>
+                    <input
+                      type="text"
+                      id="instagramHandle"
+                      placeholder="username"
+                      class="w-full pl-8 pr-3 py-2.5 bg-champagne-50/70 border border-[#dbcaa7] rounded-xl text-sm text-wine-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-wine-600"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Number of Passes -->
+              <div class="p-3 bg-champagne-100/60 rounded-xl border border-[#eedcca] flex items-center justify-between">
+                <div>
+                  <span class="block text-xs font-bold text-wine-900">Number of Passes</span>
+                  <span class="text-[11px] text-wine-700">₹2,000 per participant</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button type="button" id="decreasePasses" class="w-8 h-8 rounded-lg bg-white border border-[#d6c4a8] text-wine-900 font-bold flex items-center justify-center hover:bg-wine-50 active:scale-95 transition">-</button>
+                  <span id="passCount" class="font-bold text-sm text-wine-900 min-w-5 text-center">1</span>
+                  <button type="button" id="increasePasses" class="w-8 h-8 rounded-lg bg-white border border-[#d6c4a8] text-wine-900 font-bold flex items-center justify-center hover:bg-wine-50 active:scale-95 transition">+</button>
+                </div>
+              </div>
+
+              <!-- DJ Song Request -->
+              <div>
+                <label for="djSong" class="block text-xs font-semibold text-wine-900 mb-1 flex items-center gap-1">
+                  <i data-lucide="music" class="w-3.5 h-3.5 text-wine-600"></i>
+                  <span>Farewell Dance Song Request (Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  id="djSong"
+                  placeholder="e.g. Night Changes / Apna Bana Le"
+                  class="w-full px-3 py-2.5 bg-champagne-50/70 border border-[#dbcaa7] rounded-xl text-sm text-wine-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-wine-600"
+                />
+              </div>
+
+              <!-- Price Summary Card -->
+              <div class="p-3.5 bg-gradient-to-r from-wine-900 to-wine-800 text-gold-300 rounded-xl flex items-center justify-between shadow-inner">
+                <div>
+                  <div class="text-[10px] uppercase tracking-wider text-wine-200">Total Pass Amount</div>
+                  <div id="totalAmountText" class="text-xl font-serif font-black text-white">₹2,000</div>
+                </div>
+                <div class="text-right">
+                  <span class="inline-block text-[10px] font-semibold bg-gold-500/20 text-gold-300 px-2 py-0.5 rounded border border-gold-400/30">
+                    VIP Entry Included
+                  </span>
+                  <div class="text-[9px] text-wine-200/80 mt-0.5">Pay via UPI / Cash to Org</div>
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <button
+                type="submit"
+                id="submitBtn"
+                class="w-full py-3.5 px-4 bg-gradient-to-r from-wine-700 via-wine-800 to-wine-700 hover:from-wine-800 hover:to-wine-900 text-white font-serif font-bold text-base rounded-xl shadow-lg border border-gold-400/50 flex items-center justify-center gap-2 transform active:scale-[0.99] transition"
+              >
+                <i data-lucide="sparkles" class="w-4 h-4 text-gold-300"></i>
+                <span>Confirm & Generate Movie QR Pass</span>
+              </button>
+
+              <p class="text-[10px] text-center text-zinc-500 italic">
+                “Don't be the one watching the stories – the next morning wishing you came. ♡”
+              </p>
+            </form>
+          </div>
+
+          <!-- Flyer Details & Venue Info Card -->
+          <div class="bg-[#FAF3E9] rounded-2xl p-4 border border-[#e5d4c2] text-xs space-y-3">
+            <h4 class="font-serif font-bold text-wine-900 text-sm flex items-center gap-1.5">
+              <i data-lucide="info" class="w-4 h-4 text-wine-700"></i>
+              <span>Event Highlights & Instructions</span>
+            </h4>
+            <div class="grid grid-cols-2 gap-2 text-wine-800">
+              <div class="bg-white/80 p-2.5 rounded-lg border border-[#eeddcb]">
+                <strong class="block text-[11px] text-wine-900 font-bold mb-0.5">📍 Full Venue Address:</strong>
+                <p class="text-[11px] leading-relaxed">Pyramid Lounge, 4th Floor, Rudra Tower, Sat Paul Mittal Road, F-Block, Sarabha Nagar, Ludhiana</p>
+              </div>
+              <div class="bg-white/80 p-2.5 rounded-lg border border-[#eeddcb]">
+                <strong class="block text-[11px] text-wine-900 font-bold mb-0.5">👔 Dress Code:</strong>
+                <p class="text-[11px] leading-relaxed">Western Theme (Suits, Blazers, Evening Dresses, Tuxedos, Chic Western Gowns)</p>
+              </div>
+            </div>
+            <div class="flex items-center justify-between pt-1 border-t border-[#eeddcb] text-[11px]">
+              <span class="text-wine-700">Questions? DM Organizers on IG:</span>
+              <a href="https://instagram.com" target="_blank" class="font-bold text-wine-900 hover:underline flex items-center gap-1">
+                @DECEMBER_TO_REMEMBER_67
+                <i data-lucide="external-link" class="w-3 h-3"></i>
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ==============================================
+             PANEL 2: MOVIE TICKET PASS VIEW
+        =============================================== -->
+        <div id="ticketPanel" class="space-y-4 hidden">
+          
+          <!-- Empty State (if no ticket booked yet) -->
+          <div id="emptyTicketState" class="hidden text-center py-12 px-4 bg-white rounded-2xl border border-dashed border-[#d8c3ad]">
+            <div class="w-14 h-14 mx-auto rounded-full bg-wine-50 text-wine-700 flex items-center justify-center mb-3">
+              <i data-lucide="ticket" class="w-7 h-7"></i>
+            </div>
+            <h3 class="font-serif font-bold text-wine-900 text-lg">No Ticket Booked Yet</h3>
+            <p class="text-xs text-[#7d565b] mt-1 max-w-xs mx-auto">
+              Please enter your details in the registration form first to get your exclusive movie-style QR pass!
+            </p>
+            <button id="goToRegisterBtn" class="mt-4 px-4 py-2 bg-wine-700 text-white text-xs font-bold rounded-xl hover:bg-wine-800 transition">
+              Go to Booking Form
+            </button>
+          </div>
+
+          <!-- Active Cinema Pass Container -->
+          <div id="activeTicketState" class="space-y-4">
+            
+            <!-- Notice Banner -->
+            <div class="bg-emerald-50 border border-emerald-200 text-emerald-900 px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="font-semibold">Booking Confirmed! Present this at the lounge door.</span>
+              </div>
+              <span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">ACTIVE</span>
+            </div>
+
+            <!-- ==========================================
+                 THE CINEMA MOVIE TICKET PASS CARD
+                 (Styled with perforations, QR code, stamps)
+            =========================================== -->
+            <div id="cinemaTicketCard" class="cinema-pass-wrapper shadow-2xl rounded-3xl overflow-hidden bg-[#FAF6F0] border-2 border-gold-500/50 relative">
+              
+              <!-- Upper Stub: Poster & Event Header -->
+              <div class="bg-gradient-to-br from-wine-900 via-wine-800 to-wine-900 text-white p-5 relative overflow-hidden">
+                
+                <!-- Background festive watermark -->
+                <div class="absolute -right-6 -bottom-6 w-32 h-32 opacity-10 pointer-events-none">
+                  <i data-lucide="sparkles" class="w-full h-full"></i>
+                </div>
+
+                <div class="flex items-start justify-between">
+                  <div>
+                    <span class="inline-block text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-300 border border-gold-400/30 font-semibold mb-1">
+                      OFFICIAL FAREWELL PASS
+                    </span>
+                    <div class="font-cursive text-2xl text-gold-200 leading-none">December to</div>
+                    <div class="font-serif font-black text-xl tracking-wider uppercase text-white">REMEMBER</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-[10px] text-wine-200 uppercase font-semibold">TICKET ID</div>
+                    <div id="passRefId" class="font-mono text-xs font-bold text-gold-300">#DTR-2026-9041</div>
+                  </div>
+                </div>
+
+                <!-- Sub-ribbon inside pass -->
+                <div class="mt-3 pt-2.5 border-t border-wine-700/60 flex items-center justify-between text-xs">
+                  <span class="font-serif italic text-gold-200">Farewell Party • Class 10th</span>
+                  <span class="px-2 py-0.5 rounded bg-black/40 text-gold-300 text-[10px] font-bold border border-gold-500/30">
+                    VIP ACCESS
+                  </span>
+                </div>
+              </div>
+
+              <!-- PERFORATION LINE (The Movie Ticket Tear-Line) -->
+              <div class="relative py-2 bg-[#FAF6F0] flex items-center justify-between">
+                <!-- Left Notch Cutout -->
+                <div class="w-5 h-6 bg-[#1a0508] rounded-r-full -ml-0.5 border-r border-t border-b border-gold-500/40"></div>
+                
+                <!-- Perforated dashed line -->
+                <div class="flex-1 border-b-2 border-dashed border-wine-300 mx-2"></div>
+                
+                <!-- Right Notch Cutout -->
+                <div class="w-5 h-6 bg-[#1a0508] rounded-l-full -mr-0.5 border-l border-t border-b border-gold-500/40"></div>
+              </div>
+
+              <!-- Lower Body: Guest Details, QR Code, Barcode -->
+              <div class="p-5 pt-1 space-y-4 bg-[#FAF6F0]">
+                
+                <!-- Attendee Details -->
+                <div class="grid grid-cols-2 gap-3 text-left">
+                  <div>
+                    <div class="text-[10px] uppercase font-bold text-wine-600 tracking-wider">GUEST NAME</div>
+                    <div id="passGuestName" class="font-serif font-bold text-base text-wine-950 truncate">Ishika Sharma</div>
+                  </div>
+                  <div>
+                    <div class="text-[10px] uppercase font-bold text-wine-600 tracking-wider">CLASS & SECTION</div>
+                    <div id="passGradeSec" class="font-serif font-bold text-base text-wine-950">Class 10th • Sec A</div>
+                  </div>
+                </div>
+
+                <!-- Event Schedule Grid -->
+                <div class="bg-white p-3 rounded-xl border border-[#e8d5be] grid grid-cols-3 gap-2 text-center text-xs">
+                  <div>
+                    <span class="block text-[9px] uppercase font-bold text-zinc-500">DATE</span>
+                    <span class="font-serif font-bold text-wine-900 text-xs">23 DEC 2026</span>
+                  </div>
+                  <div class="border-x border-zinc-200">
+                    <span class="block text-[9px] uppercase font-bold text-zinc-500">TIME</span>
+                    <span class="font-serif font-bold text-wine-900 text-xs">6:00 PM</span>
+                  </div>
+                  <div>
+                    <span class="block text-[9px] uppercase font-bold text-zinc-500">PASS COUNT</span>
+                    <span id="passQuantity" class="font-serif font-bold text-wine-900 text-xs">1 Person</span>
+                  </div>
+                </div>
+
+                <!-- Venue & Dress Code -->
+                <div class="text-xs space-y-1 text-wine-900">
+                  <div class="flex items-start gap-1.5">
+                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-wine-700 mt-0.5 shrink-0"></i>
+                    <p class="text-[11px] leading-tight">
+                      <strong>Pyramid Lounge</strong>, 4th Floor, Rudra Tower, Sarabha Nagar, Ludhiana
+                    </p>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-[11px]">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-gold-600 shrink-0"></i>
+                    <span><strong>Dress Code:</strong> Western Theme</span>
+                  </div>
+                </div>
+
+                <!-- QR CODE & STAMP SECTION (The Movie Verification Section) -->
+                <div class="pt-3 border-t border-wine-200 flex items-center justify-between gap-4">
+                  
+                  <!-- Dynamic QR Code Container -->
+                  <div class="bg-white p-2.5 rounded-xl border-2 border-wine-800/20 shadow-sm flex flex-col items-center justify-center shrink-0">
+                    <div id="qrcode" class="w-[100px] h-[100px] flex items-center justify-center"></div>
+                    <span class="text-[8px] font-mono font-bold text-zinc-500 uppercase mt-1 tracking-wider">SCAN FOR ENTRY</span>
+                  </div>
+
+                  <!-- Verification Stamp & Status -->
+                  <div class="flex-1 flex flex-col items-center justify-center text-center space-y-1.5">
+                    <!-- Holographic Seal Style -->
+                    <div class="gold-seal w-16 h-16 rounded-full border-2 border-gold-600 flex flex-col items-center justify-center bg-gradient-to-tr from-gold-300 via-gold-400 to-gold-200 text-wine-950 shadow-md">
+                      <span class="text-[8px] font-black uppercase tracking-tighter">VERIFIED</span>
+                      <i data-lucide="check" class="w-4 h-4 stroke-[3]"></i>
+                      <span class="text-[7px] font-bold">DEC 2026</span>
+                    </div>
+
+                    <div class="text-[10px] font-bold text-wine-800 leading-tight">
+                      ONE LAST DANCE, ENDLESS MEMORIES ♡
+                    </div>
+                    <div id="checkInBadge" class="text-[9px] px-2 py-0.5 rounded-full font-bold bg-wine-100 text-wine-800 border border-wine-300">
+                      STATUS: ADMIT GRANTED
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Realistic Cinema Barcode -->
+                <div class="pt-2 text-center border-t border-dashed border-zinc-300">
+                  <div class="cinema-barcode font-mono text-zinc-800 tracking-[0.2em] text-lg select-none">
+                    ||||| ||| |||||| |||| ||||| || |||||||| |||| |||
+                  </div>
+                  <div id="passBarcodeText" class="text-[9px] font-mono text-zinc-500 tracking-wider">
+                    DTR-2026-9041-LUDHIANA-VIP
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Footer Strip -->
+              <div class="bg-[#ECE3D5] px-4 py-2 text-center text-[10px] text-wine-800 border-t border-[#d8c3ad] font-medium flex items-center justify-center gap-1">
+                <span>Pass Rate Paid:</span>
+                <strong id="passPaidRate" class="font-bold">₹2,000</strong>
+                <span class="text-zinc-400">•</span>
+                <span>Non-Transferable Pass</span>
+              </div>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="space-y-2 pt-2">
+              <!-- Download Button -->
+              <button
+                id="downloadPassBtn"
+                class="w-full py-3 bg-wine-700 hover:bg-wine-800 text-white font-serif font-bold text-sm rounded-xl shadow-md border border-gold-400/40 flex items-center justify-center gap-2 active:scale-[0.99] transition"
+              >
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Download Ticket (Save to Photos)</span>
+              </button>
+
+              <!-- Share on WhatsApp -->
+              <button
+                id="shareWhatsAppBtn"
+                class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 active:scale-[0.99] transition"
+              >
+                <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                <span>Share Ticket on WhatsApp</span>
+              </button>
+
+              <!-- Book Another / Re-edit -->
+              <button
+                id="editDetailsBtn"
+                class="w-full py-2 text-wine-800 hover:text-wine-950 text-xs font-semibold rounded-lg transition"
+              >
+                Edit Details or Book Another Ticket
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- ==============================================
+         POSTER LIGHTBOX MODAL
+    =============================================== -->
+    <div id="posterModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+      <div class="relative max-w-sm w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-wine-300">
+        <div class="p-3 bg-wine-900 text-white flex items-center justify-between">
+          <div class="flex items-center gap-1.5 text-xs font-semibold">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-gold-300"></i>
+            <span>Official Invitation Poster</span>
+          </div>
+          <button id="closePosterBtn" class="text-white/80 hover:text-white p-1">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <div class="p-2 max-h-[75vh] overflow-y-auto flex items-center justify-center bg-[#FAF6F0]">
+          <img src="assets/flyer.jpg" alt="December to Remember Invitation Flyer" class="w-full rounded-2xl shadow-md object-contain" />
+        </div>
+        <div class="p-3 text-center bg-champagne-100 border-t border-champagne-200">
+          <button id="closePosterBtn2" class="w-full py-2 bg-wine-700 text-white rounded-xl text-xs font-bold hover:bg-wine-800 transition">
+            Close Preview
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==============================================
+         ORGANIZER SCANNER MODAL (FOR GATE ENTRY CHECK)
+    =============================================== -->
+    <div id="organizerModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-sm w-full p-5 border border-wine-200 shadow-2xl space-y-4">
+        
+        <div class="flex items-center justify-between pb-2 border-b border-zinc-100">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-wine-100 text-wine-700 flex items-center justify-center font-bold">
+              <i data-lucide="shield-check" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="font-serif font-bold text-wine-900 text-sm">Gate Entry Scanner</h3>
+              <p class="text-[10px] text-zinc-500">Pyramid Lounge Door Staff</p>
+            </div>
+          </div>
+          <button id="closeOrganizerBtn" class="text-zinc-400 hover:text-zinc-700">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div class="space-y-3">
+          <p class="text-xs text-zinc-600">
+            Simulate scanning the QR code ticket presented at the gate by the student:
+          </p>
+
+          <div class="relative">
+            <input
+              type="text"
+              id="scanInput"
+              placeholder="Paste Ticket ID / QR string..."
+              class="w-full px-3 py-2 text-xs border border-zinc-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-wine-600 font-mono"
+            />
+          </div>
+
+          <div class="flex gap-2">
+            <button
+              id="verifyCodeBtn"
+              class="flex-1 py-2 bg-wine-700 text-white rounded-xl text-xs font-bold hover:bg-wine-800 transition"
+            >
+              Verify Ticket
+            </button>
+            <button
+              id="loadCurrentTicketBtn"
+              class="px-3 py-2 bg-zinc-100 text-zinc-700 rounded-xl text-xs font-semibold hover:bg-zinc-200 transition"
+            >
+              Use Current Pass
+            </button>
+          </div>
+
+          <!-- Scan Result Box -->
+          <div id="scanResultBox" class="hidden p-3 rounded-xl text-xs space-y-1"></div>
+
+          <!-- Total Attendees Counter -->
+          <div class="p-3 bg-champagne-100/70 rounded-xl border border-champagne-300 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-wine-800 font-medium">Registered Attendees:</span>
+              <span id="registeredCountBadge" class="font-bold text-wine-900">1</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==============================================
+         STICKY BOTTOM MOBILE FOOTER
+    =============================================== -->
+    <footer class="sticky bottom-0 z-30 bg-[#FDFBF7]/95 backdrop-blur-md border-t border-[#ebd8c5] px-4 py-2.5 flex items-center justify-around text-[10px] text-wine-800">
+      <button id="navHomeBtn" class="flex flex-col items-center gap-0.5 text-wine-700 font-bold">
+        <i data-lucide="sparkles" class="w-4 h-4 text-wine-700"></i>
+        <span>Event Info</span>
+      </button>
+      <button id="navBookBtn" class="flex flex-col items-center gap-0.5 text-wine-900 font-medium hover:text-wine-700">
+        <i data-lucide="credit-card" class="w-4 h-4"></i>
+        <span>Book Pass</span>
+      </button>
+      <button id="navPassBtn" class="flex flex-col items-center gap-0.5 text-wine-900 font-medium hover:text-wine-700">
+        <i data-lucide="ticket" class="w-4 h-4"></i>
+        <span>My Ticket</span>
+      </button>
+      <a href="https://instagram.com" target="_blank" class="flex flex-col items-center gap-0.5 text-wine-900 font-medium hover:text-wine-700">
+        <i data-lucide="instagram" class="w-4 h-4"></i>
+        <span>DM Us</span>
+      </a>
+    </footer>
+
+  </div>
+
+  <!-- App Script -->
+  <script src="app.js"></script>
+</body>
+</html>

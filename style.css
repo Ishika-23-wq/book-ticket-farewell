@@ -1,0 +1,107 @@
+/* ===================================================
+   DECEMBER TO REMEMBER - LUXURY FAREWELL PARTY APP CSS
+=================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Libre+Barcode+128+Text&display=swap');
+
+:root {
+  --wine-dark: #3E0811;
+  --wine-primary: #72101F;
+  --wine-light: #9B1A2C;
+  --gold-glow: #E5B869;
+  --paper-ivory: #FAF6F0;
+}
+
+/* Custom Ribbon banner with ribbon cuts */
+.ribbon-banner {
+  box-shadow: 0 4px 15px rgba(114, 16, 31, 0.25);
+  position: relative;
+}
+
+.ribbon-banner::before,
+.ribbon-banner::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+
+/* Movie Ticket Container Aesthetic */
+.cinema-pass-wrapper {
+  background-color: var(--paper-ivory);
+  background-image: radial-gradient(#d6c2a8 0.75px, transparent 0.75px), radial-gradient(#d6c2a8 0.75px, #FAF6F0 0.75px);
+  background-size: 30px 30px;
+  background-position: 0 0, 15px 15px;
+  position: relative;
+}
+
+/* Cinema Barcode */
+.cinema-barcode {
+  font-family: 'Libre Barcode 128 Text', monospace;
+  font-size: 38px;
+  line-height: 1;
+  letter-spacing: 2px;
+  color: #26050b;
+}
+
+/* Hologram Gold Stamp */
+.gold-seal {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 3px 10px rgba(166, 127, 25, 0.35);
+}
+
+.gold-seal::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.6) 50%,
+    transparent 70%
+  );
+  animation: shine 3.5s infinite;
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) rotate(25deg);
+  }
+  20%, 100% {
+    transform: translateX(100%) rotate(25deg);
+  }
+}
+
+/* Subtle sparkle float animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Custom Scrollbar for sleek appearance */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #FAF6F0;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbb49d;
+  border-radius: 999px;
+}
