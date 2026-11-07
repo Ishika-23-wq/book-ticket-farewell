@@ -293,10 +293,11 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, 400, { success: false, error: 'Cannot check in: Ticket is not approved by Srishty yet!' });
       }
 
-      const updateStmt = db.prepare('UPDATE attendees SET checkedIn = 1 WHERE ticketId = ?');
-      updateStmt.run(ticketId);
+      const newCheckedIn = ticket.checkedIn ? 0 : 1;
+      const updateStmt = db.prepare('UPDATE attendees SET checkedIn = ? WHERE ticketId = ?');
+      updateStmt.run(newCheckedIn, ticketId);
 
-      ticket.checkedIn = 1;
+      ticket.checkedIn = Boolean(newCheckedIn);
       ticket.companions = JSON.parse(ticket.companions || '[]');
       return sendJSON(res, 200, { success: true, ticket });
     } catch (err) {

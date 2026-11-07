@@ -9,6 +9,9 @@
 // Global State
 const PASS_PRICE = 2000;
 const SRISHTY_UPI = '9592982012@fam';
+const API_BASE = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '3000'))
+  ? 'http://localhost:3000'
+  : '';
 let passQuantity = 1;
 let qrcodeInstance = null;
 let srishtyDynamicQrInstance = null;
@@ -599,7 +602,7 @@ async function handleFormSubmit(e) {
   `;
 
   try {
-    const res = await fetch('/api/register', {
+    const res = await fetch(`${API_BASE}/api/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -644,7 +647,7 @@ function startStatusPolling(ticketId) {
 
   statusPollInterval = setInterval(async () => {
     try {
-      const res = await fetch(`/api/ticket/${encodeURIComponent(ticketId)}`);
+      const res = await fetch(`${API_BASE}/api/ticket/${encodeURIComponent(ticketId)}`);
       if (!res.ok) return;
 
       const data = await res.json();
@@ -693,7 +696,7 @@ async function handleRefreshStatus() {
   `;
 
   try {
-    const res = await fetch(`/api/ticket/${encodeURIComponent(current.ticketId)}`);
+    const res = await fetch(`${API_BASE}/api/ticket/${encodeURIComponent(current.ticketId)}`);
     if (!res.ok) throw new Error('Ticket not found in database');
 
     const data = await res.json();
@@ -839,7 +842,7 @@ async function loadSavedTicket() {
 
     // Refresh status from database immediately
     try {
-      const res = await fetch(`/api/ticket/${encodeURIComponent(currentTicket.ticketId)}`);
+      const res = await fetch(`${API_BASE}/api/ticket/${encodeURIComponent(currentTicket.ticketId)}`);
       if (res.ok) {
         const data = await res.json();
         if (data.success && data.ticket) {

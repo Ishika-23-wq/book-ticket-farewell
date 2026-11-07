@@ -109,27 +109,43 @@
             <i data-lucide="key" class="w-4 h-4"></i>
             <span>Unlock Admin Dashboard</span>
           </button>
+          <p class="text-[11px] text-zinc-400">Default PIN: <span class="font-mono font-bold text-wine-900 bg-champagne-200/60 px-1.5 py-0.5 rounded">2026</span></p>
         </div>
       </div>
 
       <!-- DASHBOARD VIEW (When unlocked) -->
       <div id="dashboardContainer" class="hidden space-y-4">
         
+        <!-- Connection Offline Warning Banner (hidden when connected) -->
+        <div id="connectionErrorBanner" class="hidden p-3 bg-rose-50 border border-rose-300 rounded-xl text-xs text-rose-900 flex items-center justify-between gap-2 shadow-xs">
+          <div class="flex items-center gap-2">
+            <span class="text-base">⚠️</span>
+            <span><strong>Server Unreachable:</strong> Run <code class="font-mono bg-rose-100 px-1 rounded">node server.js</code> in terminal (Port 3000).</span>
+          </div>
+          <button id="retryConnectionBtn" class="px-2.5 py-1 bg-rose-700 hover:bg-rose-800 text-white rounded-lg font-bold text-[11px] shrink-0">
+            Retry
+          </button>
+        </div>
+
         <!-- Live Metrics Cards -->
-        <div class="grid grid-cols-4 gap-2 text-center">
-          <div class="p-3 bg-white rounded-2xl border border-[#e5d4c2] shadow-xs">
-            <span class="block text-[9px] uppercase font-bold text-zinc-500">PENDING</span>
-            <span id="metricPending" class="text-xl font-serif font-black text-amber-600">0</span>
+        <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 text-center">
+          <div class="p-2.5 bg-white rounded-2xl border border-[#e5d4c2] shadow-xs">
+            <span class="block text-[9px] uppercase font-bold text-amber-700">PENDING</span>
+            <span id="metricPending" class="text-lg sm:text-xl font-serif font-black text-amber-600">0</span>
           </div>
-          <div class="p-3 bg-white rounded-2xl border border-[#e5d4c2] shadow-xs">
-            <span class="block text-[9px] uppercase font-bold text-zinc-500">APPROVED</span>
-            <span id="metricApproved" class="text-xl font-serif font-black text-emerald-600">0</span>
+          <div class="p-2.5 bg-white rounded-2xl border border-[#e5d4c2] shadow-xs">
+            <span class="block text-[9px] uppercase font-bold text-emerald-700">APPROVED</span>
+            <span id="metricApproved" class="text-lg sm:text-xl font-serif font-black text-emerald-600">0</span>
           </div>
-          <div class="p-3 bg-white rounded-2xl border border-[#e5d4c2] shadow-xs">
+          <div class="p-2.5 bg-white rounded-2xl border border-[#e5d4c2] shadow-xs">
+            <span class="block text-[9px] uppercase font-bold text-rose-700">REJECTED</span>
+            <span id="metricRejected" class="text-lg sm:text-xl font-serif font-black text-rose-600">0</span>
+          </div>
+          <div class="p-2.5 bg-white rounded-2xl border border-[#e5d4c2] shadow-xs col-span-1 sm:col-span-1">
             <span class="block text-[9px] uppercase font-bold text-zinc-500">HEADCOUNT</span>
-            <span id="metricHeadcount" class="text-xl font-serif font-black text-wine-900">0</span>
+            <span id="metricHeadcount" class="text-lg sm:text-xl font-serif font-black text-wine-900">0</span>
           </div>
-          <div class="p-3 bg-white rounded-2xl border border-[#e5d4c2] shadow-xs">
+          <div class="p-2.5 bg-white rounded-2xl border border-[#e5d4c2] shadow-xs col-span-2 sm:col-span-1">
             <span class="block text-[9px] uppercase font-bold text-zinc-500">COLLECTED</span>
             <span id="metricRevenue" class="text-xs sm:text-sm font-serif font-black text-emerald-800 truncate block mt-1">₹0</span>
           </div>
@@ -137,16 +153,19 @@
 
         <!-- Filter & Search Bar -->
         <div class="space-y-2">
-          <!-- Filter Switcher -->
-          <div class="flex p-1 bg-[#ede0d2] rounded-xl text-xs font-bold border border-[#dfcebc]">
-            <button id="filterPendingBtn" class="flex-1 py-1.5 rounded-lg bg-wine-700 text-white shadow-xs transition">
-              Pending Approvals (<span id="filterPendingCount">0</span>)
-            </button>
-            <button id="filterApprovedBtn" class="flex-1 py-1.5 rounded-lg text-wine-900 transition">
-              Approved Passes (<span id="filterApprovedCount">0</span>)
-            </button>
-            <button id="filterAllBtn" class="flex-1 py-1.5 rounded-lg text-wine-900 transition">
+          <!-- Filter Switcher (Tabs for All, Pending, Approved, Rejected) -->
+          <div class="grid grid-cols-4 p-1 bg-[#ede0d2] rounded-xl text-xs font-bold border border-[#dfcebc] gap-1">
+            <button id="filterAllBtn" class="py-1.5 px-2 rounded-lg bg-wine-700 text-white shadow-xs transition text-center truncate">
               All (<span id="filterAllCount">0</span>)
+            </button>
+            <button id="filterPendingBtn" class="py-1.5 px-2 rounded-lg text-wine-900 hover:bg-wine-100/60 transition text-center truncate">
+              Pending (<span id="filterPendingCount">0</span>)
+            </button>
+            <button id="filterApprovedBtn" class="py-1.5 px-2 rounded-lg text-wine-900 hover:bg-wine-100/60 transition text-center truncate">
+              Approved (<span id="filterApprovedCount">0</span>)
+            </button>
+            <button id="filterRejectedBtn" class="py-1.5 px-2 rounded-lg text-wine-900 hover:bg-wine-100/60 transition text-center truncate">
+              Rejected (<span id="filterRejectedCount">0</span>)
             </button>
           </div>
 
