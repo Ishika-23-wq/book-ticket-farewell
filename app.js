@@ -1,6 +1,9 @@
 /* ===================================================
    DECEMBER TO REMEMBER - CLASS 10TH FAREWELL APP JS
-   With Srishty's UPI Payment Verification & Admin Portal
+   Strict Approval Workflow:
+   - Tickets are ONLY shown once Srishty accepts!
+   - Pending state: Shows review status (ticket hidden).
+   - Rejected state: Shows rejection details (ticket hidden).
 =================================================== */
 
 // Global State
@@ -11,7 +14,7 @@ let adminCurrentFilter = 'pending'; // 'pending' | 'all'
 
 // Srishty's Details
 const SRISHTY_UPI = '9592982012@fam';
-const ADMIN_PIN = '11011';
+const ADMIN_PIN = '2026';
 
 // Target Event Date: December 23, 2026 18:00:00 (6:00 PM)
 const EVENT_DATE = new Date('2026-12-23T18:00:00+05:30').getTime();
@@ -29,19 +32,42 @@ const phoneInput = document.getElementById('phoneNumber');
 const instagramInput = document.getElementById('instagramHandle');
 const djSongInput = document.getElementById('djSong');
 const utrNumberInput = document.getElementById('utrNumber');
+const paymentAmountInput = document.getElementById('paymentAmount');
+const amountErrorMsg = document.getElementById('amountErrorMsg');
+const submitBtn = document.getElementById('submitBtn');
 const copyUpiBtn = document.getElementById('copyUpiBtn');
 const copyUpiLabel = document.getElementById('copyUpiLabel');
 
-// Panels & Navigation
+// Panels & Tab Navigation
 const registerPanel = document.getElementById('registerPanel');
 const ticketPanel = document.getElementById('ticketPanel');
 const tabRegisterBtn = document.getElementById('tabRegisterBtn');
 const tabTicketBtn = document.getElementById('tabTicketBtn');
 const viewMyTicketBtn = document.getElementById('viewMyTicketBtn');
-const emptyTicketState = document.getElementById('emptyTicketState');
-const activeTicketState = document.getElementById('activeTicketState');
 
-// Ticket display fields
+// 4 Ticket States
+const emptyTicketState = document.getElementById('emptyTicketState');
+const pendingTicketState = document.getElementById('pendingTicketState');
+const rejectedTicketState = document.getElementById('rejectedTicketState');
+const approvedTicketState = document.getElementById('approvedTicketState');
+
+// Pending State Elements
+const pendingGuestName = document.getElementById('pendingGuestName');
+const pendingGradeSec = document.getElementById('pendingGradeSec');
+const pendingUtr = document.getElementById('pendingUtr');
+const pendingRefId = document.getElementById('pendingRefId');
+const notifySrishtyBtn = document.getElementById('notifySrishtyBtn');
+const refreshStatusBtn = document.getElementById('refreshStatusBtn');
+
+// Rejected State Elements
+const rejectReasonText = document.getElementById('rejectReasonText');
+const rejectedGuestName = document.getElementById('rejectedGuestName');
+const rejectedUtr = document.getElementById('rejectedUtr');
+const rejectedRefId = document.getElementById('rejectedRefId');
+const contactSrishtyAfterRejectBtn = document.getElementById('contactSrishtyAfterRejectBtn');
+const reapplyBtn = document.getElementById('reapplyBtn');
+
+// Approved Ticket Card Elements
 const passRefId = document.getElementById('passRefId');
 const passGuestName = document.getElementById('passGuestName');
 const passGradeSec = document.getElementById('passGradeSec');
@@ -49,23 +75,8 @@ const passUtrDisplay = document.getElementById('passUtrDisplay');
 const passBarcodeText = document.getElementById('passBarcodeText');
 const checkInBadge = document.getElementById('checkInBadge');
 const qrCodeContainer = document.getElementById('qrcode');
-const qrLockedOverlay = document.getElementById('qrLockedOverlay');
-const ticketStatusAlert = document.getElementById('ticketStatusAlert');
-const ticketStatusDot = document.getElementById('ticketStatusDot');
-const ticketStatusTitle = document.getElementById('ticketStatusTitle');
-const ticketStatusPill = document.getElementById('ticketStatusPill');
-const ticketStatusDesc = document.getElementById('ticketStatusDesc');
-const alertUtrNumber = document.getElementById('alertUtrNumber');
-const ticketSeal = document.getElementById('ticketSeal');
-const sealTopText = document.getElementById('sealTopText');
-const sealIconWrap = document.getElementById('sealIconWrap');
-const approvalByFooter = document.getElementById('approvalByFooter');
-
-// Buttons inside ticket panel
 const downloadPassBtn = document.getElementById('downloadPassBtn');
-const downloadBtnText = document.getElementById('downloadBtnText');
 const shareWhatsAppBtn = document.getElementById('shareWhatsAppBtn');
-const notifySrishtyBtn = document.getElementById('notifySrishtyBtn');
 const editDetailsBtn = document.getElementById('editDetailsBtn');
 const goToRegisterBtn = document.getElementById('goToRegisterBtn');
 
@@ -124,6 +135,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Event Listeners
 function setupEventListeners() {
+  // Enforce exact ₹2,000 payment - block any value less than or more than 2000
+  if (paymentAmountInput) {
+    paymentAmountInput.addEventListener('input', validatePaymentAmount);
+    paymentAmountInput.addEventListener('change', validatePaymentAmount);
+  }
+
   // Copy UPI
   if (copyUpiBtn) {
     copyUpiBtn.addEventListener('click', () => {
@@ -143,7 +160,19 @@ function setupEventListeners() {
   tabTicketBtn.addEventListener('click', () => switchTab('ticket'));
   viewMyTicketBtn.addEventListener('click', () => switchTab('ticket'));
   goToRegisterBtn.addEventListener('click', () => switchTab('register'));
-  editDetailsBtn.addEventListener('click', () => switchTab('register'));
+  if (editDetailsBtn) editDetailsBtn.addEventListener('click', () => switchTab('register'));
+
+  // Pending State Actions
+  if (notifySrishtyBtn) notifySrishtyBtn.addEventListener('click', notifySrishtyOnWhatsApp);
+  if (refreshStatusBtn) refreshStatusBtn.addEventListener('click', handleRefreshStatus);
+
+  // Rejected State Actions
+  if (contactSrishtyAfterRejectBtn) contactSrishtyAfterRejectBtn.addEventListener('click', contactSrishtyAfterReject);
+  if (reapplyBtn) reapplyBtn.addEventListener('click', handleReapply);
+
+  // Approved Ticket Actions
+  if (downloadPassBtn) downloadPassBtn.addEventListener('click', downloadTicketAsImage);
+  if (shareWhatsAppBtn) shareWhatsAppBtn.addEventListener('click', shareOnWhatsApp);
 
   // Footer nav
   if (navHomeBtn) navHomeBtn.addEventListener('click', () => {
@@ -154,11 +183,6 @@ function setupEventListeners() {
 
   // Form submit
   form.addEventListener('submit', handleFormSubmit);
-
-  // Ticket actions
-  downloadPassBtn.addEventListener('click', handleDownloadPassClick);
-  shareWhatsAppBtn.addEventListener('click', shareOnWhatsApp);
-  notifySrishtyBtn.addEventListener('click', notifySrishtyOnWhatsApp);
 
   // Srishty Admin Modal
   srishtyAdminBtn.addEventListener('click', openSrishtyAdminModal);
@@ -186,15 +210,9 @@ function setupEventListeners() {
   adminSearchInput.addEventListener('input', renderAdminRegistrations);
 
   // Poster Modal
-  if (openPosterBtn) {
-    openPosterBtn.addEventListener('click', () => posterModal.classList.remove('hidden'));
-  }
-  if (closePosterBtn) {
-    closePosterBtn.addEventListener('click', () => posterModal.classList.add('hidden'));
-  }
-  if (closePosterBtn2) {
-    closePosterBtn2.addEventListener('click', () => posterModal.classList.add('hidden'));
-  }
+  if (openPosterBtn) openPosterBtn.addEventListener('click', () => posterModal.classList.remove('hidden'));
+  if (closePosterBtn) closePosterBtn.addEventListener('click', () => posterModal.classList.add('hidden'));
+  if (closePosterBtn2) closePosterBtn2.addEventListener('click', () => posterModal.classList.add('hidden'));
 
   // Organizer Door Scanner Modal
   organizerBtn.addEventListener('click', () => {
@@ -202,9 +220,7 @@ function setupEventListeners() {
     scanResultBox.classList.add('hidden');
     updateAdminStatsAndBadges();
   });
-  closeOrganizerBtn.addEventListener('click', () => {
-    organizerModal.classList.add('hidden');
-  });
+  closeOrganizerBtn.addEventListener('click', () => organizerModal.classList.add('hidden'));
   verifyCodeBtn.addEventListener('click', verifyTicketFromInput);
   loadCurrentTicketBtn.addEventListener('click', () => {
     const ticket = getStoredCurrentTicket();
@@ -216,7 +232,7 @@ function setupEventListeners() {
   });
 }
 
-// Switch between tabs
+// Switch between tabs & handle the 3 states
 function switchTab(tab) {
   if (tab === 'register') {
     registerPanel.classList.remove('hidden');
@@ -236,15 +252,7 @@ function switchTab(tab) {
     tabRegisterBtn.classList.remove('bg-wine-700', 'text-white', 'shadow-sm');
     tabRegisterBtn.classList.add('text-wine-900');
 
-    const currentTicket = getStoredCurrentTicket();
-    if (!currentTicket) {
-      emptyTicketState.classList.remove('hidden');
-      activeTicketState.classList.add('hidden');
-    } else {
-      emptyTicketState.classList.add('hidden');
-      activeTicketState.classList.remove('hidden');
-      renderTicket(currentTicket);
-    }
+    renderTicketPanelState();
     window.scrollTo({ top: 400, behavior: 'smooth' });
   }
 
@@ -253,9 +261,134 @@ function switchTab(tab) {
   }
 }
 
+// Render the appropriate state inside Ticket Panel
+function renderTicketPanelState() {
+  const ticket = getStoredCurrentTicket();
+
+  // Hide all 4 states initially
+  emptyTicketState.classList.add('hidden');
+  pendingTicketState.classList.add('hidden');
+  rejectedTicketState.classList.add('hidden');
+  approvedTicketState.classList.add('hidden');
+
+  if (!ticket) {
+    emptyTicketState.classList.remove('hidden');
+    return;
+  }
+
+  // 1. PENDING STATE: Ticket is 100% hidden!
+  if (ticket.status === 'PENDING') {
+    pendingTicketState.classList.remove('hidden');
+    pendingGuestName.textContent = ticket.fullName;
+    pendingGradeSec.textContent = `${ticket.classGrade} • ${ticket.section}`;
+    pendingUtr.textContent = ticket.utrNumber || 'N/A';
+    pendingRefId.textContent = `#${ticket.ticketId}`;
+  }
+  // 2. REJECTED STATE: Ticket is 100% hidden!
+  else if (ticket.status === 'REJECTED') {
+    rejectedTicketState.classList.remove('hidden');
+    rejectReasonText.textContent = ticket.rejectReason || 'Payment verification failed or UTR does not match bank records.';
+    rejectedGuestName.textContent = ticket.fullName;
+    rejectedUtr.textContent = ticket.utrNumber || 'N/A';
+    rejectedRefId.textContent = `#${ticket.ticketId}`;
+  }
+  // 3. APPROVED STATE: The only state where ticket & QR are displayed!
+  else if (ticket.status === 'APPROVED') {
+    approvedTicketState.classList.remove('hidden');
+    renderApprovedTicket(ticket);
+  }
+
+  if (window.lucide) {
+    window.lucide.createIcons();
+  }
+}
+
+// Render Approved Cinema Ticket with dynamic QR Code
+function renderApprovedTicket(ticket) {
+  passRefId.textContent = `#${ticket.ticketId}`;
+  passGuestName.textContent = ticket.fullName;
+  passGradeSec.textContent = `${ticket.classGrade} • ${ticket.section}`;
+  passUtrDisplay.textContent = ticket.utrNumber || 'N/A';
+  passBarcodeText.textContent = `${ticket.ticketId}-LUDHIANA-VIP`;
+
+  if (ticket.checkedIn) {
+    checkInBadge.textContent = 'STATUS: CHECKED IN AT DOOR';
+    checkInBadge.className = 'text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+  } else {
+    checkInBadge.textContent = 'STATUS: ADMIT GRANTED';
+    checkInBadge.className = 'text-[9px] px-2 py-0.5 rounded-full font-bold bg-wine-100 text-wine-800 border border-wine-300';
+  }
+
+  // Generate Scannable QR Payload
+  const qrPayload = JSON.stringify({
+    id: ticket.ticketId,
+    name: ticket.fullName,
+    grade: ticket.classGrade,
+    sec: ticket.section,
+    utr: ticket.utrNumber,
+    approvedBy: "Srishty",
+    status: "VALID_ENTRY",
+    event: "December to Remember",
+    venue: "Pyramid Lounge",
+    date: "2026-12-23"
+  });
+
+  generateQRCode(qrPayload);
+}
+
+// QR Code generator
+function generateQRCode(text) {
+  qrCodeContainer.innerHTML = '';
+  try {
+    qrcodeInstance = new QRCode(qrCodeContainer, {
+      text: text,
+      width: 96,
+      height: 96,
+      colorDark: "#3E0811",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch (err) {
+    console.error('QR code generation error:', err);
+    qrCodeContainer.innerHTML = `<span class="text-xs text-wine-700 font-mono">${text}</span>`;
+  }
+}
+
+// Validate payment amount - Strictly enforce exactly 2000 (disallow less or more)
+function validatePaymentAmount() {
+  if (!paymentAmountInput) return true;
+  const amt = Number(paymentAmountInput.value);
+  if (amt !== PASS_PRICE || isNaN(amt)) {
+    if (amountErrorMsg) amountErrorMsg.classList.remove('hidden');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+    return false;
+  } else {
+    if (amountErrorMsg) amountErrorMsg.classList.add('hidden');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+    return true;
+  }
+}
+
 // Handle Form Submission
 function handleFormSubmit(e) {
   e.preventDefault();
+
+  // Strictly validate payment amount - disallow values less or more than 2000
+  if (!validatePaymentAmount()) {
+    alert('Payment amount must be exactly ₹2,000. You cannot proceed with an amount less or more than ₹2,000.');
+    if (paymentAmountInput) {
+      paymentAmountInput.value = '2000';
+      validatePaymentAmount();
+      paymentAmountInput.focus();
+    }
+    return;
+  }
 
   const fullName = fullNameInput.value.trim();
   const classGrade = classGradeInput.value;
@@ -289,7 +422,7 @@ function handleFormSubmit(e) {
     instagram,
     song,
     quantity: 1,
-    totalAmount: PASS_PRICE, // Exactly ₹2000
+    totalAmount: PASS_PRICE, // Exactly ₹2,000
     utrNumber: utr,
     paidTo: SRISHTY_UPI,
     status: 'PENDING', // 'PENDING' | 'APPROVED' | 'REJECTED'
@@ -312,141 +445,88 @@ function handleFormSubmit(e) {
   }
   localStorage.setItem(STORAGE_ALL_ATTENDEES, JSON.stringify(attendees));
 
-  // Switch to ticket view
+  // Switch to ticket view (will display PENDING state, ticket is hidden)
   switchTab('ticket');
   viewMyTicketBtn.classList.remove('hidden');
   updateAdminStatsAndBadges();
 
-  // Subtle alert indicating pending approval
   setTimeout(() => {
-    alert(`🎉 Registration details submitted!\n\nYour ₹2,000 payment (UTR: ${utr}) has been sent to Srishty for confirmation.\n\nPlease tap "Send Payment Details to Srishty on WhatsApp" to notify her directly!`);
-  }, 400);
+    alert(`🎉 Registration details submitted!\n\nYour ₹2,000 payment (UTR: ${utr}) is now with Srishty for verification.\n\nYour movie pass will unlock here once Srishty approves! Tap "Send Payment Details to Srishty on WhatsApp" to notify her.`);
+  }, 350);
 }
 
-// Render Ticket Details with Pending vs Approved States
-function renderTicket(ticket) {
-  passRefId.textContent = `#${ticket.ticketId}`;
-  passGuestName.textContent = ticket.fullName;
-  passGradeSec.textContent = `${ticket.classGrade} • ${ticket.section}`;
-  passUtrDisplay.textContent = ticket.utrNumber || 'N/A';
-  passBarcodeText.textContent = `${ticket.ticketId}-LUDHIANA-VIP`;
-  if (alertUtrNumber) alertUtrNumber.textContent = ticket.utrNumber || 'N/A';
+// Check / Refresh Approval Status
+function handleRefreshStatus() {
+  const current = getStoredCurrentTicket();
+  if (!current) return;
 
-  const isApproved = ticket.status === 'APPROVED';
+  // Refresh from all attendees database
+  const attendees = getAllAttendees();
+  const fresh = attendees.find(a => a.ticketId === current.ticketId);
 
-  if (isApproved) {
-    // ACTIVE / APPROVED STATE
-    ticketStatusAlert.className = 'bg-emerald-50 border border-emerald-300 text-emerald-950 px-3.5 py-3 rounded-2xl text-xs space-y-1 shadow-sm';
-    ticketStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
-    ticketStatusTitle.className = 'font-bold text-sm text-emerald-900';
-    ticketStatusTitle.textContent = 'Pass Approved & Confirmed by Srishty!';
-    ticketStatusPill.className = 'text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold';
-    ticketStatusPill.textContent = 'ACTIVE PASS';
-    ticketStatusDesc.innerHTML = `Your ₹2,000 payment was verified by <strong>Srishty</strong>. Your movie pass is officially active for entry at <strong>Pyramid Lounge</strong>!`;
-
-    // Unlock QR Code
-    qrLockedOverlay.classList.add('hidden');
-    
-    // Status Badge & Seal
-    sealTopText.textContent = 'VERIFIED';
-    sealIconWrap.innerHTML = '<i data-lucide="check" class="w-4 h-4 stroke-[3]"></i>';
-    ticketSeal.className = 'gold-seal w-16 h-16 rounded-full border-2 border-gold-600 flex flex-col items-center justify-center bg-gradient-to-tr from-gold-300 via-gold-400 to-gold-200 text-wine-950 shadow-md';
-
-    if (ticket.checkedIn) {
-      checkInBadge.textContent = 'STATUS: CHECKED IN AT DOOR';
-      checkInBadge.className = 'text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
-    } else {
-      checkInBadge.textContent = 'STATUS: ADMIT GRANTED';
-      checkInBadge.className = 'text-[9px] px-2 py-0.5 rounded-full font-bold bg-wine-100 text-wine-800 border border-wine-300';
+  if (fresh) {
+    localStorage.setItem(STORAGE_CURRENT_TICKET, JSON.stringify(fresh));
+    if (fresh.status === 'APPROVED') {
+      triggerConfetti();
+      renderTicketPanelState();
+      alert(`🎉 Congratulations ${fresh.fullName}!\n\nSrishty has verified and APPROVED your ₹2,000 payment!\nYour official VIP Movie QR Pass is now unlocked.`);
+      return;
+    } else if (fresh.status === 'REJECTED') {
+      renderTicketPanelState();
+      alert(`⚠️ Srishty could not approve your payment.\nReason: ${fresh.rejectReason || 'Verification failed'}`);
+      return;
     }
-
-    approvalByFooter.textContent = 'Approved by Srishty (Lead Org)';
-    approvalByFooter.className = 'text-[9px] text-emerald-800 font-bold';
-
-    downloadPassBtn.classList.remove('opacity-60', 'cursor-not-allowed');
-    downloadBtnText.textContent = 'Download Ticket (Save to Photos)';
-    notifySrishtyBtn.classList.add('hidden');
-
-    // Scannable QR Payload
-    const qrPayload = JSON.stringify({
-      id: ticket.ticketId,
-      name: ticket.fullName,
-      grade: ticket.classGrade,
-      sec: ticket.section,
-      utr: ticket.utrNumber,
-      approvedBy: "Srishty",
-      status: "VALID_ENTRY",
-      event: "December to Remember",
-      venue: "Pyramid Lounge",
-      date: "2026-12-23"
-    });
-    generateQRCode(qrPayload);
-
-  } else {
-    // PENDING STATE
-    ticketStatusAlert.className = 'bg-amber-50 border border-amber-300 text-amber-950 px-3.5 py-3 rounded-2xl text-xs space-y-1 shadow-sm';
-    ticketStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse';
-    ticketStatusTitle.className = 'font-bold text-sm text-amber-900';
-    ticketStatusTitle.textContent = "Payment Awaiting Srishty's Approval";
-    ticketStatusPill.className = 'text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold';
-    ticketStatusPill.textContent = 'PENDING APPROVAL';
-    ticketStatusDesc.innerHTML = `Your ₹2,000 payment (UTR: <span class="font-mono font-bold text-wine-900">${ticket.utrNumber}</span>) has been submitted. <strong>Srishty</strong> must confirm it before your entry QR pass unlocks!`;
-
-    // Keep QR Code locked
-    qrLockedOverlay.classList.remove('hidden');
-
-    sealTopText.textContent = 'PENDING';
-    sealIconWrap.innerHTML = '<i data-lucide="clock" class="w-4 h-4 stroke-[2.5]"></i>';
-    ticketSeal.className = 'gold-seal w-16 h-16 rounded-full border-2 border-amber-500 flex flex-col items-center justify-center bg-gradient-to-tr from-amber-200 via-amber-300 to-amber-100 text-amber-950 shadow-md';
-
-    checkInBadge.textContent = "STATUS: PENDING SRISHTY'S APPROVAL";
-    checkInBadge.className = 'text-[9px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-900 border border-amber-300';
-
-    approvalByFooter.textContent = "Awaiting Srishty's Verification";
-    approvalByFooter.className = 'text-[9px] text-amber-800 italic';
-
-    downloadPassBtn.classList.add('opacity-75');
-    downloadBtnText.textContent = 'Download Ticket (Pending Approval)';
-    notifySrishtyBtn.classList.remove('hidden');
-
-    // Generate static placeholder QR
-    generateQRCode(`PENDING_APPROVAL_FOR_${ticket.ticketId}`);
   }
 
-  if (window.lucide) {
-    window.lucide.createIcons();
-  }
+  alert("⏳ Status: Still Awaiting Srishty's Approval.\n\nSrishty has not reviewed this submission yet. Please tap 'Send Payment Details on WhatsApp' to ping her directly!");
 }
 
-// QR Code generator
-function generateQRCode(text) {
-  qrCodeContainer.innerHTML = '';
-  try {
-    qrcodeInstance = new QRCode(qrCodeContainer, {
-      text: text,
-      width: 96,
-      height: 96,
-      colorDark: "#3E0811",
-      colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.M
-    });
-  } catch (err) {
-    console.error('QR code generation error:', err);
-    qrCodeContainer.innerHTML = `<span class="text-xs text-wine-700 font-mono">${text}</span>`;
-  }
+// Send WhatsApp payment confirmation to Srishty
+function notifySrishtyOnWhatsApp() {
+  const current = getStoredCurrentTicket();
+  if (!current) return;
+
+  const msg = `👑 *Payment Confirmation for Srishty* 👑%0A%0A` +
+    `Hi Srishty! I have registered for *December to Remember (Class 10th Farewell Party)* and sent ₹2,000 on UPI.%0A%0A` +
+    `👤 *Name:* ${current.fullName} (${current.classGrade} - ${current.section})%0A` +
+    `📱 *Phone:* ${current.phone}%0A` +
+    `💳 *UTR / Ref:* ${current.utrNumber}%0A` +
+    `💵 *Amount:* ₹2,000 (Exact)%0A` +
+    `🎟️ *Ticket ID:* ${current.ticketId}%0A%0A` +
+    `Please approve my VIP ticket in your Admin Portal! ✨`;
+
+  window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
 }
 
-// Handle Ticket Download
-function handleDownloadPassClick() {
-  const currentTicket = getStoredCurrentTicket();
-  if (!currentTicket) return;
+// Contact Srishty after Rejection
+function contactSrishtyAfterReject() {
+  const current = getStoredCurrentTicket();
+  if (!current) return;
 
-  if (currentTicket.status !== 'APPROVED') {
-    const confirmDownload = confirm("⚠️ Your ticket is still awaiting Srishty's approval! Would you like to save it as a pending pass anyway, or notify Srishty first?");
-    if (!confirmDownload) return;
+  const msg = `Hi Srishty, my registration for December to Remember was marked as Rejected.%0A%0A` +
+    `👤 *Name:* ${current.fullName}%0A` +
+    `🎟️ *Ref:* ${current.ticketId}%0A` +
+    `💳 *UTR:* ${current.utrNumber}%0A%0A` +
+    `Could you please check my transaction receipt? Here is my screenshot. Thank you!`;
+
+  window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
+}
+
+// Re-apply / correct submission
+function handleReapply() {
+  const current = getStoredCurrentTicket();
+  if (current) {
+    fullNameInput.value = current.fullName || '';
+    phoneInput.value = current.phone || '';
+    if (current.instagram) instagramInput.value = current.instagram.replace(/^@/, '');
+    utrNumberInput.value = '';
+    if (paymentAmountInput) {
+      paymentAmountInput.value = '2000';
+      validatePaymentAmount();
+    }
   }
-
-  downloadTicketAsImage();
+  switchTab('register');
+  utrNumberInput.focus();
 }
 
 // Download Ticket as high-resolution PNG image
@@ -478,23 +558,6 @@ function downloadTicketAsImage() {
     alert('Unable to generate ticket image directly. You can take a screenshot of your screen!');
     downloadPassBtn.innerHTML = originalBtnContent;
   });
-}
-
-// Send WhatsApp Payment Confirmation to Srishty
-function notifySrishtyOnWhatsApp() {
-  const current = getStoredCurrentTicket();
-  if (!current) return;
-
-  const msg = `👑 *Payment Confirmation for Srishty* 👑%0A%0A` +
-    `Hi Srishty! I have registered for *December to Remember (Class 10th Farewell Party)* and completed my ₹2,000 UPI payment.%0A%0A` +
-    `👤 *Attendee:* ${current.fullName} (${current.classGrade} - ${current.section})%0A` +
-    `📱 *Phone:* ${current.phone}%0A` +
-    `💳 *UTR / Ref No:* ${current.utrNumber}%0A` +
-    `💵 *Amount Paid:* ₹2,000 (Exact)%0A` +
-    `🎟️ *Ticket ID:* ${current.ticketId}%0A%0A` +
-    `Please check your FamPay/UPI app (${SRISHTY_UPI}) and approve my VIP pass in your Admin Portal! ✨`;
-
-  window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
 }
 
 // Share ticket details with friends
@@ -616,8 +679,13 @@ function renderAdminRegistrations() {
 
   filtered.forEach(item => {
     const isPending = item.status === 'PENDING';
+    const isRejected = item.status === 'REJECTED';
     const card = document.createElement('div');
-    card.className = `p-3.5 bg-white rounded-2xl border shadow-xs space-y-2.5 transition ${isPending ? 'border-amber-300 ring-1 ring-amber-200' : 'border-[#e2d2c1]'}`;
+    card.className = `p-3.5 bg-white rounded-2xl border shadow-xs space-y-2.5 transition ${
+      isPending ? 'border-amber-300 ring-1 ring-amber-200' :
+      isRejected ? 'border-rose-300' :
+      'border-[#e2d2c1]'
+    }`;
 
     card.innerHTML = `
       <div class="flex items-start justify-between gap-2">
@@ -641,7 +709,7 @@ function renderAdminRegistrations() {
         </div>
         <div class="flex justify-between">
           <span class="text-zinc-500">UTR / Ref:</span>
-          <strong class="text-wine-950 font-bold bg-amber-100/60 px-1 rounded">${item.utrNumber || 'N/A'}</strong>
+          <strong class="text-wine-950 font-bold bg-amber-100/70 px-1 rounded">${item.utrNumber || 'N/A'}</strong>
         </div>
         <div class="flex justify-between">
           <span class="text-zinc-500">Ticket ID:</span>
@@ -651,6 +719,11 @@ function renderAdminRegistrations() {
           <span class="text-zinc-500">Phone:</span>
           <a href="tel:${item.phone}" class="text-wine-700 hover:underline">${item.phone}</a>
         </div>
+        ${item.rejectReason ? `
+          <div class="pt-1 text-[10px] text-rose-700 border-t border-rose-200">
+            <strong>Rejection Reason:</strong> ${item.rejectReason}
+          </div>
+        ` : ''}
       </div>
 
       <div class="flex items-center gap-2 pt-1">
@@ -659,7 +732,7 @@ function renderAdminRegistrations() {
             onclick="adminApproveTicket('${item.ticketId}')"
             class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-xs flex items-center justify-center gap-1 active:scale-95"
           >
-            <span>✅ Approve & Issue Pass</span>
+            <span>✅ Approve & Issue Ticket</span>
           </button>
           <button
             onclick="adminRejectTicket('${item.ticketId}')"
@@ -672,7 +745,7 @@ function renderAdminRegistrations() {
             onclick="adminRevokeTicket('${item.ticketId}')"
             class="py-1 px-2 text-[10px] bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg font-medium"
           >
-            Revoke / Re-review
+            Re-review (Reset to Pending)
           </button>
         `}
         <a
@@ -701,18 +774,21 @@ window.adminApproveTicket = function(ticketId) {
   attendee.status = 'APPROVED';
   attendee.approvedBy = 'Srishty';
   attendee.approvedAt = new Date().toISOString();
+  attendee.rejectReason = null;
 
   localStorage.setItem(STORAGE_ALL_ATTENDEES, JSON.stringify(attendees));
 
-  // If this is also the current active ticket in session, update it!
+  // If this is also the current active ticket in session, update it and reveal ticket!
   const current = getStoredCurrentTicket();
   if (current && current.ticketId === ticketId) {
     current.status = 'APPROVED';
     current.approvedBy = 'Srishty';
     current.approvedAt = attendee.approvedAt;
+    current.rejectReason = null;
     localStorage.setItem(STORAGE_CURRENT_TICKET, JSON.stringify(current));
-    renderTicket(current);
+
     triggerConfetti();
+    renderTicketPanelState();
   }
 
   renderAdminDashboard();
@@ -720,7 +796,7 @@ window.adminApproveTicket = function(ticketId) {
 
 // Admin Action: Reject Ticket
 window.adminRejectTicket = function(ticketId) {
-  const reason = prompt('Reason for rejecting (e.g. UTR mismatch, wrong amount):', 'Payment verification failed');
+  const reason = prompt('Reason for rejection (e.g. UTR mismatch, payment not received):', 'Payment verification failed');
   if (reason === null) return;
 
   const attendees = getAllAttendees();
@@ -737,7 +813,8 @@ window.adminRejectTicket = function(ticketId) {
     current.status = 'REJECTED';
     current.rejectReason = reason;
     localStorage.setItem(STORAGE_CURRENT_TICKET, JSON.stringify(current));
-    renderTicket(current);
+
+    renderTicketPanelState();
   }
 
   renderAdminDashboard();
@@ -752,20 +829,25 @@ window.adminRevokeTicket = function(ticketId) {
   attendee.status = 'PENDING';
   attendee.approvedBy = null;
   attendee.approvedAt = null;
+  attendee.rejectReason = null;
 
   localStorage.setItem(STORAGE_ALL_ATTENDEES, JSON.stringify(attendees));
 
   const current = getStoredCurrentTicket();
   if (current && current.ticketId === ticketId) {
     current.status = 'PENDING';
+    current.approvedBy = null;
+    current.approvedAt = null;
+    current.rejectReason = null;
     localStorage.setItem(STORAGE_CURRENT_TICKET, JSON.stringify(current));
-    renderTicket(current);
+
+    renderTicketPanelState();
   }
 
   renderAdminDashboard();
 };
 
-// Door Entry Scanner Verification (incorporates Srishty's Approval check)
+// Door Entry Scanner Verification (Enforces Srishty's Approval check)
 function verifyTicketFromInput() {
   const query = scanInput.value.trim();
   if (!query) {
@@ -786,21 +868,32 @@ function verifyTicketFromInput() {
   }
 
   if (found) {
-    if (found.status !== 'APPROVED') {
+    if (found.status === 'PENDING') {
       scanResultBox.className = 'p-3 rounded-xl text-xs space-y-1 bg-amber-50 border border-amber-300 text-amber-900';
       scanResultBox.innerHTML = `
         <div class="font-bold flex items-center gap-1.5 text-sm text-amber-900">
-          <span class="text-base">⚠️</span> ENTRY DENIED — PAYMENT NOT APPROVED
+          <span class="text-base">⚠️</span> ENTRY DENIED — TICKET PENDING APPROVAL
         </div>
         <div><strong>Guest:</strong> ${found.fullName} (${found.classGrade} - ${found.section})</div>
-        <div><strong>Status:</strong> ${found.status} (Awaiting Srishty's verification)</div>
+        <div><strong>Status:</strong> Awaiting Srishty's ₹2,000 payment confirmation.</div>
         <p class="text-[11px] text-amber-800 pt-1">
-          Srishty has not approved this attendee's ₹2,000 payment yet. Please contact Srishty at <strong>${SRISHTY_UPI}</strong>.
+          Ticket has NOT been issued yet. Srishty must approve the payment before entry can be granted.
         </p>
+      `;
+      return;
+    } else if (found.status === 'REJECTED') {
+      scanResultBox.className = 'p-3 rounded-xl text-xs space-y-1 bg-rose-50 border border-rose-300 text-rose-900';
+      scanResultBox.innerHTML = `
+        <div class="font-bold flex items-center gap-1.5 text-sm text-rose-900">
+          <span class="text-base">⛔</span> ENTRY DENIED — REGISTRATION REJECTED
+        </div>
+        <div><strong>Guest:</strong> ${found.fullName} (${found.classGrade} - ${found.section})</div>
+        <div><strong>Reason:</strong> ${found.rejectReason || 'Payment rejected by Srishty'}</div>
       `;
       return;
     }
 
+    // Pass is APPROVED
     found.checkedIn = true;
     localStorage.setItem(STORAGE_CURRENT_TICKET, JSON.stringify(found));
 
@@ -814,7 +907,7 @@ function verifyTicketFromInput() {
       <div class="text-[10px] text-emerald-700 pt-1 font-mono">Status: Checked in at Pyramid Lounge door!</div>
     `;
 
-    renderTicket(found);
+    renderApprovedTicket(found);
   } else {
     scanResultBox.className = 'p-3 rounded-xl text-xs space-y-1 bg-rose-50 border border-rose-300 text-rose-900';
     scanResultBox.innerHTML = `
