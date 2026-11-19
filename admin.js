@@ -295,6 +295,7 @@ function renderAttendeesList() {
     filtered = filtered.filter(a =>
       (a.fullName && a.fullName.toLowerCase().includes(query)) ||
       (a.utrNumber && a.utrNumber.toLowerCase().includes(query)) ||
+      (a.paymentMethod && a.paymentMethod.toLowerCase().includes(query)) ||
       (a.ticketId && a.ticketId.toLowerCase().includes(query)) ||
       (a.phone && a.phone.includes(query)) ||
       (a.companions && a.companions.some(c => c.name && c.name.toLowerCase().includes(query))) ||
@@ -477,6 +478,10 @@ function createAttendeeCardElement(item) {
     `;
   }
 
+  const isCash = item.paymentMethod === 'CASH' ||
+    (item.utrNumber && item.utrNumber.toUpperCase().startsWith('CASH')) ||
+    (item.paidTo && item.paidTo.toLowerCase().includes('cash'));
+
   card.innerHTML = `
     <div class="flex items-start justify-between gap-2">
       <div>
@@ -502,16 +507,33 @@ function createAttendeeCardElement(item) {
         <strong class="text-wine-950 font-bold font-sans">${item.quantity || 1} Person(s)</strong>
       </div>
       <div class="flex justify-between items-center">
-        <span class="text-zinc-500 font-sans">Payment Due to Srishty:</span>
+        <span class="text-zinc-500 font-sans">Payment Amount:</span>
         <strong class="text-emerald-800 font-bold text-xs">₹${(item.totalAmount || (item.quantity || 1) * 2000).toLocaleString('en-IN')} (Exact)</strong>
       </div>
-      <div class="flex justify-between items-center pt-1 border-t border-champagne-200/60">
-        <span class="text-zinc-500 font-sans">Submitted UTR / Ref:</span>
-        <div class="flex items-center gap-1">
-          <strong class="text-wine-950 font-bold bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300 text-xs">${item.utrNumber}</strong>
-          <button onclick="copyUtr('${item.utrNumber}')" class="text-[10px] text-wine-700 hover:text-wine-900 bg-white border border-champagne-300 px-1.5 py-0.5 rounded" title="Copy UTR">Copy</button>
-        </div>
+      <div class="flex justify-between items-center">
+        <span class="text-zinc-500 font-sans">Payment Mode:</span>
+        ${isCash
+          ? '<span class="inline-flex items-center gap-1 font-bold font-sans text-emerald-900 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-300 text-[10px]">💵 CASH TO SRISHTY</span>'
+          : '<span class="inline-flex items-center gap-1 font-bold font-sans text-wine-900 bg-wine-100 px-2 py-0.5 rounded-full border border-wine-300 text-[10px]">📱 UPI / ONLINE</span>'
+        }
       </div>
+      ${isCash ? `
+        <div class="flex justify-between items-center pt-1 border-t border-champagne-200/60">
+          <span class="text-zinc-500 font-sans">Cash Details:</span>
+          <div class="flex items-center gap-1">
+            <strong class="text-emerald-950 font-bold bg-emerald-100/90 px-1.5 py-0.5 rounded border border-emerald-300 text-xs">Collect ₹${(item.totalAmount || (item.quantity || 1) * 2000).toLocaleString('en-IN')} Cash</strong>
+            <span class="text-[10px] text-zinc-600 font-sans italic truncate max-w-[130px]">${item.utrNumber && item.utrNumber !== 'CASH' && item.utrNumber !== 'CASH-PAYMENT' ? item.utrNumber : 'In Person'}</span>
+          </div>
+        </div>
+      ` : `
+        <div class="flex justify-between items-center pt-1 border-t border-champagne-200/60">
+          <span class="text-zinc-500 font-sans">Submitted UTR / Ref:</span>
+          <div class="flex items-center gap-1">
+            <strong class="text-wine-950 font-bold bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300 text-xs">${item.utrNumber}</strong>
+            <button onclick="copyUtr('${item.utrNumber}')" class="text-[10px] text-wine-700 hover:text-wine-900 bg-white border border-champagne-300 px-1.5 py-0.5 rounded" title="Copy UTR">Copy</button>
+          </div>
+        </div>
+      `}
       <div class="flex justify-between items-center">
         <span class="text-zinc-500 font-sans">Ticket Ref ID:</span>
         <span class="text-zinc-700">#${item.ticketId}</span>
@@ -554,7 +576,7 @@ function createAttendeeCardElement(item) {
           onclick="approveTicket('${item.ticketId}')"
           class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center justify-center gap-1 active:scale-95"
         >
-          <span>✅ Confirm & Approve (${item.quantity} Passes)</span>
+          <span>${isCash ? '💵 Confirm Cash Received & Approve' : '✅ Confirm & Approve'} (${item.quantity} Passes)</span>
         </button>
         <button
           onclick="rejectTicket('${item.ticketId}')"
@@ -641,7 +663,11 @@ window.approveTicket = async function(ticketId) {
 
 // Admin Action: Reject Ticket in Database
 window.rejectTicket = async function(ticketId) {
-  const reason = prompt('Reason for rejection (e.g. UTR mismatch, payment not received in FamPay):', 'Payment verification failed');
+  const item = allAttendees.find(a => a.ticketId === ticketId);
+  const isCash = item && (item.paymentMethod === 'CASH' || (item.utrNumber && item.utrNumber.toUpperCase().startsWith('CASH')));
+  const defaultReason = isCash ? 'Cash payment not received by Srishty' : 'Payment verification failed / UTR mismatch';
+
+  const reason = prompt('Reason for rejection:', defaultReason);
   if (reason === null) return;
 
   try {

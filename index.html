@@ -399,7 +399,7 @@
               </div>
 
               <!-- ==========================================
-                   SRISHTY UPI PAYMENT QR & DETAILS SECTION
+                   SRISHTY PAYMENT DETAILS SECTION (UPI / CASH)
               =========================================== -->
               <div class="mt-4 pt-4 border-t-2 border-dashed border-[#e2cfbd] space-y-3">
                 <div class="flex items-center justify-between">
@@ -408,7 +408,7 @@
                       ₹
                     </span>
                     <div>
-                      <h4 class="font-serif font-bold text-wine-900 text-sm">Pay Srishty via UPI</h4>
+                      <h4 class="font-serif font-bold text-wine-900 text-sm">Payment to Srishty</h4>
                       <p id="subPaymentSubtitle" class="text-[10px] text-wine-600 font-medium">Exact ₹2,000 payment required</p>
                     </div>
                   </div>
@@ -417,8 +417,36 @@
                   </span>
                 </div>
 
-                <!-- Srishty Amount-Protected Payment Box -->
-                <div class="bg-gradient-to-b from-[#1c1917] to-[#120f0e] text-white p-4 rounded-2xl shadow-md border border-[#3e342f] text-center space-y-3">
+                <!-- Payment Method Toggle (UPI vs CASH) -->
+                <div class="space-y-1.5">
+                  <label class="block text-xs font-semibold text-wine-900 flex items-center justify-between">
+                    <span>Payment Option *</span>
+                    <span class="text-[10px] text-zinc-500 font-normal">Online UPI or Cash in Hand</span>
+                  </label>
+                  <div class="grid grid-cols-2 gap-2 p-1 bg-champagne-100/90 rounded-2xl border border-[#ddcbba]">
+                    <button
+                      type="button"
+                      id="payMethodUpiBtn"
+                      class="py-2 px-3 rounded-xl font-serif font-bold text-xs transition flex items-center justify-center gap-1.5 bg-wine-700 text-white shadow-xs"
+                    >
+                      <i data-lucide="smartphone" class="w-4 h-4"></i>
+                      <span>Pay via UPI / QR</span>
+                    </button>
+                    <button
+                      type="button"
+                      id="payMethodCashBtn"
+                      class="py-2 px-3 rounded-xl font-serif font-bold text-xs transition flex items-center justify-center gap-1.5 text-wine-900 hover:bg-white/60"
+                    >
+                      <i data-lucide="banknote" class="w-4 h-4"></i>
+                      <span>Pay via Cash 💵</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- OPTION A: UPI Payment Box -->
+                <div id="upiPaymentContainer" class="space-y-3">
+                  <!-- Srishty Amount-Protected Payment Box -->
+                  <div class="bg-gradient-to-b from-[#1c1917] to-[#120f0e] text-white p-4 rounded-2xl shadow-md border border-[#3e342f] text-center space-y-3">
                   <div class="flex items-center justify-between border-b border-white/10 pb-2">
                     <div class="flex items-center gap-1.5 text-gold-300 text-xs font-semibold">
                       <span>👑</span>
@@ -478,61 +506,104 @@
                   </div>
 
                 </div>
+              </div>
 
-                <!-- Payment Amount & UPI UTR in a clean layout -->
-                <div class="space-y-3">
-                  <!-- Payment Amount Field (Strictly locked & validated to passQuantity * 2000) -->
-                  <div>
-                    <label for="paymentAmount" class="block text-xs font-semibold text-wine-900 mb-1 flex items-center justify-between">
-                      <span>Total Pass Amount (₹) *</span>
-                      <span id="fixedAmountLabel" class="text-[10px] text-emerald-800 font-bold bg-emerald-100/70 px-2 py-0.5 rounded-full border border-emerald-300">
-                        Fixed at ₹2,000 (1 Person)
-                      </span>
-                    </label>
-                    <div class="relative">
-                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-wine-800 font-bold text-sm">
-                        ₹
-                      </div>
-                      <input
-                        type="number"
-                        id="paymentAmount"
-                        required
-                        value="2000"
-                        readonly
-                        class="w-full pl-8 pr-3 py-2.5 bg-champagne-50/70 border border-[#dbcaa7] rounded-xl text-sm font-bold text-wine-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-wine-600 transition"
-                      />
-                    </div>
-                    <!-- Inline validation error if amount != passQuantity * 2000 -->
-                    <p id="amountErrorMsg" class="hidden text-[11px] text-rose-700 font-bold mt-1.5 p-2 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-1.5">
-                      <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>
-                      <span id="amountErrorText">Amount must match the exact total for your selected passes.</span>
-                    </p>
+              <!-- OPTION B: Cash Payment Box (Hidden by default) -->
+              <div id="cashPaymentContainer" class="hidden bg-gradient-to-b from-[#FAF5EE] to-[#F5EBE0] p-4 rounded-2xl border-2 border-emerald-600/40 shadow-sm space-y-3 text-left">
+                <div class="flex items-center justify-between border-b border-emerald-200 pb-2">
+                  <div class="flex items-center gap-1.5 text-emerald-950 text-xs font-bold">
+                    <span class="text-base">💵</span>
+                    <span class="font-serif">Cash in Hand to Srishty</span>
                   </div>
+                  <span id="cashLockedAmountBadge" class="text-[10px] bg-emerald-700 text-white font-bold px-2.5 py-0.5 rounded-full shadow-2xs">
+                    Total: ₹2,000 Cash
+                  </span>
+                </div>
 
-                  <!-- UPI UTR / Transaction ID Input (Mandatory) -->
-                  <div>
-                    <label for="utrNumber" class="block text-xs font-semibold text-wine-900 mb-1 flex items-center justify-between">
-                      <span>UPI Reference / UTR Number *</span>
-                      <span class="text-[10px] text-wine-600 font-semibold">12-digit number from payment receipt</span>
-                    </label>
-                    <div class="relative">
-                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-wine-400">
-                        <i data-lucide="receipt" class="w-4 h-4"></i>
-                      </div>
-                      <input
-                        type="text"
-                        id="utrNumber"
-                        required
-                        maxlength="24"
-                        placeholder="e.g. 431289104821 or Transaction Ref"
-                        class="w-full pl-9 pr-3 py-2.5 bg-champagne-50/70 border border-[#dbcaa7] rounded-xl text-sm font-mono text-wine-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-wine-600 uppercase"
-                      />
+                <div class="space-y-2 text-xs text-zinc-700">
+                  <p class="leading-relaxed">
+                    Hand over exact cash of <strong id="cashAmountNotice" class="text-emerald-900 font-bold text-sm">₹2,000</strong> directly to <strong>Srishty</strong> in school or class.
+                  </p>
+                  <div class="p-3 bg-white/90 rounded-xl border border-emerald-200 text-[11px] space-y-1.5 text-zinc-700 shadow-2xs">
+                    <div class="flex items-start gap-1.5 text-emerald-900 font-semibold">
+                      <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
+                      <span>No UPI / Netbanking required. Hand over cash directly to organizer.</span>
                     </div>
-                    <p class="text-[10px] text-zinc-500 mt-1">
-                      Found in your GPay / PhonePe / Paytm / FamPay transaction receipt. Srishty cross-checks this to approve your pass.
-                    </p>
+                    <div class="flex items-start gap-1.5 text-zinc-600">
+                      <i data-lucide="clock" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+                      <span>Your pass will be activated as soon as Srishty confirms cash collection in her admin portal.</span>
+                    </div>
                   </div>
                 </div>
+
+                <!-- Optional Cash Handover Note -->
+                <div class="pt-1">
+                  <label for="cashNoteInput" class="block text-[11px] font-semibold text-wine-900 mb-1">
+                    Cash Handover Details / Note (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    id="cashNoteInput"
+                    placeholder="e.g. Handing cash to Srishty tomorrow in Class 10th"
+                    class="w-full px-3 py-2 bg-white border border-[#dbcaa7] rounded-xl text-xs text-wine-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-wine-600"
+                  />
+                </div>
+              </div>
+
+              <!-- Payment Amount & UPI UTR in a clean layout -->
+              <div class="space-y-3">
+                <!-- Payment Amount Field (Strictly locked & validated to passQuantity * 2000) -->
+                <div>
+                  <label for="paymentAmount" class="block text-xs font-semibold text-wine-900 mb-1 flex items-center justify-between">
+                    <span>Total Pass Amount (₹) *</span>
+                    <span id="fixedAmountLabel" class="text-[10px] text-emerald-800 font-bold bg-emerald-100/70 px-2 py-0.5 rounded-full border border-emerald-300">
+                      Fixed at ₹2,000 (1 Person)
+                    </span>
+                  </label>
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-wine-800 font-bold text-sm">
+                      ₹
+                    </div>
+                    <input
+                      type="number"
+                      id="paymentAmount"
+                      required
+                      value="2000"
+                      readonly
+                      class="w-full pl-8 pr-3 py-2.5 bg-champagne-50/70 border border-[#dbcaa7] rounded-xl text-sm font-bold text-wine-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-wine-600 transition"
+                    />
+                  </div>
+                  <!-- Inline validation error if amount != passQuantity * 2000 -->
+                  <p id="amountErrorMsg" class="hidden text-[11px] text-rose-700 font-bold mt-1.5 p-2 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-1.5">
+                    <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>
+                    <span id="amountErrorText">Amount must match the exact total for your selected passes.</span>
+                  </p>
+                </div>
+
+                <!-- UPI UTR / Transaction ID Input (Mandatory for UPI, hidden for Cash) -->
+                <div id="utrFieldContainer">
+                  <label for="utrNumber" class="block text-xs font-semibold text-wine-900 mb-1 flex items-center justify-between">
+                    <span>UPI Reference / UTR Number *</span>
+                    <span class="text-[10px] text-wine-600 font-semibold">12-digit number from payment receipt</span>
+                  </label>
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-wine-400">
+                      <i data-lucide="receipt" class="w-4 h-4"></i>
+                    </div>
+                    <input
+                      type="text"
+                      id="utrNumber"
+                      required
+                      maxlength="24"
+                      placeholder="e.g. 431289104821 or Transaction Ref"
+                      class="w-full pl-9 pr-3 py-2.5 bg-champagne-50/70 border border-[#dbcaa7] rounded-xl text-sm font-mono text-wine-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-wine-600 uppercase"
+                    />
+                  </div>
+                  <p class="text-[10px] text-zinc-500 mt-1">
+                    Found in your GPay / PhonePe / Paytm / FamPay transaction receipt. Srishty cross-checks this to approve your pass.
+                  </p>
+                </div>
+              </div>
 
               </div>
 
@@ -616,8 +687,8 @@
 
               <div class="space-y-1">
                 <h3 class="font-serif font-black text-xl text-wine-950">Payment Verification Under Review</h3>
-                <p class="text-xs text-[#734a36] max-w-xs mx-auto leading-relaxed">
-                  Your registration and ₹2,000 payment receipt have been sent to <strong>Srishty</strong> for confirmation.
+                <p id="pendingSubtitleNotice" class="text-xs text-[#734a36] max-w-xs mx-auto leading-relaxed">
+                  Your registration and payment details have been sent to <strong>Srishty</strong> for confirmation.
                 </p>
               </div>
 
@@ -627,8 +698,8 @@
                   <i data-lucide="lock" class="w-4 h-4 text-amber-700 shrink-0"></i>
                   <span>Ticket Locked Until Srishty Accepts</span>
                 </div>
-                <p class="text-[11px] text-amber-800 leading-relaxed">
-                  Your cinema-style movie pass with the scannable entry QR code will unlock and appear here <strong>only after Srishty confirms your ₹2,000 UPI transaction</strong>.
+                <p id="pendingLockNoticeText" class="text-[11px] text-amber-800 leading-relaxed">
+                  Your cinema-style movie pass with the scannable entry QR code will unlock and appear here <strong>only after Srishty confirms your payment (UPI or Cash)</strong>.
                 </p>
               </div>
 
@@ -651,7 +722,7 @@
                   <span id="pendingAmountText" class="font-bold text-emerald-800 font-sans">₹2,000</span>
                 </div>
                 <div class="flex justify-between items-center pb-1.5 border-b border-zinc-100">
-                  <span class="text-zinc-500 font-sans">Submitted UTR:</span>
+                  <span id="pendingUtrLabel" class="text-zinc-500 font-sans">Payment / UTR:</span>
                   <span id="pendingUtr" class="font-bold text-wine-900 bg-amber-100/70 px-1.5 py-0.5 rounded text-[11px]">--</span>
                 </div>
                 <div class="flex justify-between items-center">
@@ -699,8 +770,8 @@
 
               <div class="space-y-1">
                 <h3 class="font-serif font-black text-xl text-rose-950">Registration Rejected</h3>
-                <p class="text-xs text-rose-900/80 max-w-xs mx-auto leading-relaxed">
-                  Srishty could not verify your ₹2,000 UPI payment for this submission.
+                <p id="rejectedSubtitleNotice" class="text-xs text-rose-900/80 max-w-xs mx-auto leading-relaxed">
+                  Srishty could not verify the payment for this submission.
                 </p>
               </div>
 
@@ -763,8 +834,8 @@
                 </div>
                 <span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">ACTIVE PASS</span>
               </div>
-              <p class="text-[11px] text-emerald-800 leading-relaxed">
-                Your ₹2,000 payment was confirmed by <strong>Srishty</strong>. Present this official movie pass with your QR code at the Pyramid Lounge entrance!
+              <p id="approvedNoticeText" class="text-[11px] text-emerald-800 leading-relaxed">
+                Your payment was confirmed by <strong>Srishty</strong>. Present this official movie pass with your QR code at the Pyramid Lounge entrance!
               </p>
             </div>
 
@@ -853,7 +924,7 @@
                     <span id="passQuantity" class="font-serif font-bold text-wine-900 text-xs">1 Person</span>
                   </div>
                   <div>
-                    <span class="block text-[9px] uppercase font-bold text-zinc-500">UTR REF</span>
+                    <span id="passPaymentRefLabel" class="block text-[9px] uppercase font-bold text-zinc-500">PAYMENT</span>
                     <span id="passUtrDisplay" class="font-mono font-bold text-wine-900 text-[10px] truncate block">--</span>
                   </div>
                 </div>

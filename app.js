@@ -79,6 +79,19 @@ const qrLockedBadgeText = document.getElementById('qrLockedBadgeText');
 const qrScanHelpText = document.getElementById('qrScanHelpText');
 const srishtyDynamicQr = document.getElementById('srishtyDynamicQr');
 
+// Payment Method Toggle & Cash Controls
+let selectedPaymentMethod = 'UPI';
+const payMethodUpiBtn = document.getElementById('payMethodUpiBtn');
+const payMethodCashBtn = document.getElementById('payMethodCashBtn');
+const upiPaymentContainer = document.getElementById('upiPaymentContainer');
+const cashPaymentContainer = document.getElementById('cashPaymentContainer');
+const cashLockedAmountBadge = document.getElementById('cashLockedAmountBadge');
+const cashAmountNotice = document.getElementById('cashAmountNotice');
+const cashNoteInput = document.getElementById('cashNoteInput');
+const utrFieldContainer = document.getElementById('utrFieldContainer');
+const pendingUtrLabel = document.getElementById('pendingUtrLabel');
+const passPaymentRefLabel = document.getElementById('passPaymentRefLabel');
+
 // Panels & Tab Navigation
 const registerPanel = document.getElementById('registerPanel');
 const ticketPanel = document.getElementById('ticketPanel');
@@ -178,6 +191,14 @@ function setupEventListeners() {
     });
   }
 
+  // Payment Option Buttons (UPI vs Cash)
+  if (payMethodUpiBtn) {
+    payMethodUpiBtn.addEventListener('click', () => setPaymentMethod('UPI'));
+  }
+  if (payMethodCashBtn) {
+    payMethodCashBtn.addEventListener('click', () => setPaymentMethod('CASH'));
+  }
+
   // Copy UPI ID
   if (copyUpiBtn) {
     copyUpiBtn.addEventListener('click', () => {
@@ -227,6 +248,42 @@ function setupEventListeners() {
   if (closePosterBtn2) closePosterBtn2.addEventListener('click', () => posterModal && posterModal.classList.add('hidden'));
 }
 
+// Switch Payment Method (UPI vs Cash)
+function setPaymentMethod(method) {
+  selectedPaymentMethod = method;
+
+  const activeClass = 'py-2 px-3 rounded-xl font-serif font-bold text-xs transition flex items-center justify-center gap-1.5 bg-wine-700 text-white shadow-xs';
+  const inactiveClass = 'py-2 px-3 rounded-xl font-serif font-bold text-xs transition flex items-center justify-center gap-1.5 text-wine-900 hover:bg-white/60';
+
+  if (method === 'UPI') {
+    if (payMethodUpiBtn) payMethodUpiBtn.className = activeClass;
+    if (payMethodCashBtn) payMethodCashBtn.className = inactiveClass;
+    if (upiPaymentContainer) upiPaymentContainer.classList.remove('hidden');
+    if (cashPaymentContainer) cashPaymentContainer.classList.add('hidden');
+    if (utrFieldContainer) utrFieldContainer.classList.remove('hidden');
+    if (utrNumberInput) {
+      utrNumberInput.setAttribute('required', 'required');
+      if (utrNumberInput.value === 'CASH' || utrNumberInput.value.startsWith('CASH')) {
+        utrNumberInput.value = '';
+      }
+    }
+  } else {
+    if (payMethodUpiBtn) payMethodUpiBtn.className = inactiveClass;
+    if (payMethodCashBtn) payMethodCashBtn.className = activeClass;
+    if (upiPaymentContainer) upiPaymentContainer.classList.add('hidden');
+    if (cashPaymentContainer) cashPaymentContainer.classList.remove('hidden');
+    if (utrFieldContainer) utrFieldContainer.classList.add('hidden');
+    if (utrNumberInput) {
+      utrNumberInput.removeAttribute('required');
+      utrNumberInput.value = 'CASH';
+    }
+  }
+
+  if (window.lucide) {
+    window.lucide.createIcons();
+  }
+}
+
 // ==============================================
 // PASS COUNT, AMOUNT LOCKING & COMPANIONS
 // ==============================================
@@ -243,6 +300,12 @@ function updatePassQuantityUI() {
   }
   if (payLockedAmountBadge) {
     payLockedAmountBadge.textContent = `🔒 Total: ${formattedTotal} Locked`;
+  }
+  if (cashLockedAmountBadge) {
+    cashLockedAmountBadge.textContent = `Total: ${formattedTotal} Cash`;
+  }
+  if (cashAmountNotice) {
+    cashAmountNotice.textContent = formattedTotal;
   }
   if (upiPayBtnText) {
     upiPayBtnText.textContent = `Tap to Pay ${formattedTotal} via UPI (GPay / PhonePe / Paytm)`;
@@ -429,7 +492,19 @@ function renderTicketPanelState() {
     pendingTicketState.classList.remove('hidden');
     pendingGuestName.textContent = ticket.fullName;
     pendingGradeSec.textContent = `${ticket.classGrade} • ${ticket.section}`;
-    pendingUtr.textContent = ticket.utrNumber || 'N/A';
+
+    const isCashTicket = ticket.paymentMethod === 'CASH' || (ticket.utrNumber && ticket.utrNumber.toUpperCase().startsWith('CASH'));
+    if (pendingUtrLabel) {
+      pendingUtrLabel.textContent = isCashTicket ? 'Payment Method:' : 'Submitted UTR:';
+    }
+    if (isCashTicket) {
+      pendingUtr.textContent = '💵 Cash to Srishty (Pending)';
+      pendingUtr.className = 'font-bold text-emerald-900 bg-emerald-100/90 border border-emerald-300 px-2 py-0.5 rounded text-[11px]';
+    } else {
+      pendingUtr.textContent = ticket.utrNumber || 'N/A';
+      pendingUtr.className = 'font-bold text-wine-900 bg-amber-100/70 px-1.5 py-0.5 rounded text-[11px]';
+    }
+
     pendingRefId.textContent = `#${ticket.ticketId}`;
     if (pendingAmountText) {
       pendingAmountText.textContent = `₹${ticket.totalAmount.toLocaleString('en-IN')} (${ticket.quantity} Passes)`;
@@ -451,9 +526,10 @@ function renderTicketPanelState() {
   else if (ticket.status === 'REJECTED') {
     stopStatusPolling();
     rejectedTicketState.classList.remove('hidden');
-    rejectReasonText.textContent = ticket.rejectReason || 'Payment verification failed or UTR does not match bank records.';
+    const isCashTicket = ticket.paymentMethod === 'CASH' || (ticket.utrNumber && ticket.utrNumber.toUpperCase().startsWith('CASH'));
+    rejectReasonText.textContent = ticket.rejectReason || (isCashTicket ? 'Cash payment not confirmed by Srishty.' : 'Payment verification failed or UTR does not match bank records.');
     rejectedGuestName.textContent = ticket.fullName;
-    rejectedUtr.textContent = ticket.utrNumber || 'N/A';
+    rejectedUtr.textContent = isCashTicket ? 'CASH PAYMENT' : (ticket.utrNumber || 'N/A');
     rejectedRefId.textContent = `#${ticket.ticketId}`;
   }
   // 3. APPROVED STATE: The ONLY state where the cinema pass & QR code are displayed!
@@ -473,7 +549,12 @@ function renderApprovedTicket(ticket) {
   passRefId.textContent = `#${ticket.ticketId}`;
   passGuestName.textContent = ticket.fullName;
   passGradeSec.textContent = `${ticket.classGrade} • ${ticket.section}`;
-  passUtrDisplay.textContent = ticket.utrNumber || 'N/A';
+
+  const isCashTicket = ticket.paymentMethod === 'CASH' || (ticket.utrNumber && ticket.utrNumber.toUpperCase().startsWith('CASH'));
+  if (passPaymentRefLabel) {
+    passPaymentRefLabel.textContent = isCashTicket ? 'PAYMENT' : 'UTR REF';
+  }
+  passUtrDisplay.textContent = isCashTicket ? 'CASH VERIFIED' : (ticket.utrNumber || 'N/A');
   passBarcodeText.textContent = `${ticket.ticketId}-LUDHIANA-VIP`;
 
   if (passQuantityEl) {
@@ -586,7 +667,13 @@ async function handleFormSubmit(e) {
     }
   }
 
-  if (!utr) {
+  const isCash = selectedPaymentMethod === 'CASH';
+  let utr = utrNumberInput.value.trim();
+
+  if (isCash) {
+    const cashNote = cashNoteInput ? cashNoteInput.value.trim() : '';
+    utr = cashNote ? `CASH - ${cashNote}` : 'CASH';
+  } else if (!utr) {
     const expected = passQuantity * PASS_PRICE;
     alert(`Please enter the 12-digit UPI UTR / Transaction Reference number after paying ₹${expected.toLocaleString('en-IN')} to Srishty.`);
     utrNumberInput.focus();
@@ -609,7 +696,9 @@ async function handleFormSubmit(e) {
     quantity: passQuantity,
     companions,
     totalAmount,
-    utrNumber: utr
+    utrNumber: utr,
+    paymentMethod: selectedPaymentMethod,
+    paidTo: isCash ? 'Cash to Srishty' : '9592982012@fam'
   };
 
   // Submit button loading state
@@ -645,7 +734,11 @@ async function handleFormSubmit(e) {
     startStatusPolling(savedTicket.ticketId);
 
     setTimeout(() => {
-      alert(`🎉 Registration details saved in Database!\n\nYour ₹${totalAmount.toLocaleString('en-IN')} payment (${passQuantity} Passes, UTR: ${utr}) is now with Srishty for confirmation.\n\nYour pass unlocks once Srishty approves! Tap "Send Payment Details to Srishty on WhatsApp" to notify her.`);
+      if (isCash) {
+        alert(`🎉 Registration details saved in Database!\n\nPlease hand over ₹${totalAmount.toLocaleString('en-IN')} cash directly to Srishty (${passQuantity} Passes).\n\nYour pass unlocks once Srishty approves your cash payment! Tap "Send Payment Details to Srishty on WhatsApp" to notify her.`);
+      } else {
+        alert(`🎉 Registration details saved in Database!\n\nYour ₹${totalAmount.toLocaleString('en-IN')} payment (${passQuantity} Passes, UTR: ${utr}) is now with Srishty for confirmation.\n\nYour pass unlocks once Srishty approves! Tap "Send Payment Details to Srishty on WhatsApp" to notify her.`);
+      }
     }, 350);
 
   } catch (err) {
@@ -753,15 +846,23 @@ function notifySrishtyOnWhatsApp() {
     companionsInfo = `%0A👥 *Accompanying Guests (${current.companions.length}):* ` + current.companions.map(c => `${c.name} (${c.grade}-${c.sec})`).join(', ');
   }
 
-  const msg = `👑 *Payment Confirmation for Srishty* 👑%0A%0A` +
+  const isCashTicket = current.paymentMethod === 'CASH' || (current.utrNumber && current.utrNumber.toUpperCase().startsWith('CASH'));
+  const paymentLine = isCashTicket
+    ? `💵 *Payment Mode:* CASH in Hand (₹${current.totalAmount.toLocaleString('en-IN')}) to Srishty%0A` +
+      `📝 *Details:* ${current.utrNumber}%0A`
+    : `💳 *UTR / Ref:* ${current.utrNumber}%0A` +
+      `💵 *Total Paid:* ₹${current.totalAmount.toLocaleString('en-IN')} (UPI)%0A`;
+
+  const msg = `👑 *Registration & Payment Details for Srishty* 👑%0A%0A` +
     `Hi Srishty! I have registered for *December to Remember (Class 10th Farewell Party)*.%0A%0A` +
     `👤 *Primary Attendee:* ${current.fullName} (${current.classGrade} - ${current.section})%0A` +
     `🎟️ *Passes Count:* ${current.quantity} Person(s)` + companionsInfo + `%0A` +
     `📱 *Phone:* ${current.phone}%0A` +
-    `💳 *UTR / Ref:* ${current.utrNumber}%0A` +
-    `💵 *Total Paid:* ₹${current.totalAmount.toLocaleString('en-IN')} (Exact)%0A` +
+    paymentLine +
     `🎟️ *Ticket ID:* #${current.ticketId}%0A%0A` +
-    `Please approve our VIP pass in your Admin Portal! ✨`;
+    (isCashTicket
+      ? `I will hand over the cash to you. Please confirm my VIP pass in your Admin Portal once collected! ✨`
+      : `Please approve our VIP pass in your Admin Portal! ✨`);
 
   window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
 }
@@ -771,12 +872,14 @@ function contactSrishtyAfterReject() {
   const current = getStoredCurrentTicket();
   if (!current) return;
 
+  const isCashTicket = current.paymentMethod === 'CASH' || (current.utrNumber && current.utrNumber.toUpperCase().startsWith('CASH'));
   const msg = `Hi Srishty, my registration for December to Remember was marked as Rejected.%0A%0A` +
     `👤 *Name:* ${current.fullName}%0A` +
     `🎟️ *Ref:* #${current.ticketId}%0A` +
-    `💳 *UTR:* ${current.utrNumber}%0A` +
-    `💵 *Amount:* ₹${current.totalAmount}%0A%0A` +
-    `Could you please check my transaction receipt? Here is my screenshot. Thank you!`;
+    (isCashTicket
+      ? `💵 *Payment Method:* Cash in Hand (₹${current.totalAmount})%0A`
+      : `💳 *UTR:* ${current.utrNumber}%0A💵 *Amount:* ₹${current.totalAmount}%0A`) +
+    `Could you please check my registration? Thank you!`;
 
   window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
 }

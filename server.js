@@ -61,6 +61,14 @@ try {
       timestamp TEXT NOT NULL
     )
   `);
+
+  // Migration: Ensure paymentMethod column exists (defaults to 'UPI')
+  try {
+    db.exec(`ALTER TABLE attendees ADD COLUMN paymentMethod TEXT DEFAULT 'UPI'`);
+  } catch (_) {
+    // Column already exists
+  }
+
   console.log('✅ SQLite Database initialized at:', DB_PATH);
 } catch (dbErr) {
   console.error('❌ SQLite initialization error:', dbErr);
@@ -151,8 +159,14 @@ async function handleRequest(req, res) {
   if (req.method === 'POST' && pathname === '/api/register') {
     try {
       const data = await parseBody(req);
-      if (!data.fullName || !data.phone || !data.utrNumber) {
-        return sendJSON(res, 400, { success: false, error: 'Name, phone, and UTR number are required.' });
+      const paymentMethod = (data.paymentMethod || 'UPI').toUpperCase() === 'CASH' ? 'CASH' : 'UPI';
+      const isCash = paymentMethod === 'CASH';
+      const utrNumber = isCash
+        ? (data.utrNumber && data.utrNumber.trim() ? data.utrNumber.trim() : 'CASH-PAYMENT')
+        : (data.utrNumber ? data.utrNumber.trim() : '');
+
+      if (!data.fullName || !data.phone || (!isCash && !utrNumber)) {
+        return sendJSON(res, 400, { success: false, error: 'Name, phone, and payment details are required.' });
       }
 
       const randomNum = Math.floor(1000 + Math.random() * 9000);
@@ -161,15 +175,16 @@ async function handleRequest(req, res) {
       const totalAmount = quantity * 2000;
       const companionsJson = JSON.stringify(data.companions || []);
       const now = new Date().toISOString();
+      const paidTo = isCash ? 'Cash to Srishty' : (data.paidTo || '9592982012@fam');
 
       const insertStmt = db.prepare(`
         INSERT INTO attendees (
           ticketId, fullName, classGrade, section, phone, instagram, song,
-          quantity, companions, totalAmount, utrNumber, paidTo, status,
+          quantity, companions, totalAmount, utrNumber, paidTo, paymentMethod, status,
           rejectReason, approvedBy, approvedAt, checkedIn, timestamp
         ) VALUES (
           ?, ?, ?, ?, ?, ?, ?,
-          ?, ?, ?, ?, ?, 'PENDING',
+          ?, ?, ?, ?, ?, ?, 'PENDING',
           NULL, NULL, NULL, 0, ?
         )
       `);
@@ -185,14 +200,16 @@ async function handleRequest(req, res) {
         quantity,
         companionsJson,
         totalAmount,
-        data.utrNumber.trim(),
-        '9592982012@fam',
+        utrNumber,
+        paidTo,
+        paymentMethod,
         now
       );
 
       const selectStmt = db.prepare('SELECT * FROM attendees WHERE ticketId = ?');
       const savedTicket = selectStmt.get(ticketId);
       savedTicket.companions = JSON.parse(savedTicket.companions || '[]');
+      savedTicket.paymentMethod = savedTicket.paymentMethod || paymentMethod;
 
       return sendJSON(res, 201, { success: true, ticket: savedTicket });
     } catch (err) {
@@ -210,6 +227,7 @@ async function handleRequest(req, res) {
       if (!ticket) {
         return sendJSON(res, 404, { success: false, error: 'Ticket not found' });
       }
+      ticket.paymentMethod = ticket.paymentMethod || (ticket.utrNumber && ticket.utrNumber.toUpperCase().startsWith('CASH') ? 'CASH' : 'UPI');
       ticket.companions = JSON.parse(ticket.companions || '[]');
       return sendJSON(res, 200, { success: true, ticket });
     } catch (err) {
@@ -228,6 +246,7 @@ async function handleRequest(req, res) {
       const stmt = db.prepare('SELECT * FROM attendees ORDER BY timestamp DESC');
       const attendees = stmt.all().map(a => ({
         ...a,
+        paymentMethod: a.paymentMethod || (a.utrNumber && a.utrNumber.toUpperCase().startsWith('CASH') ? 'CASH' : 'UPI'),
         companions: JSON.parse(a.companions || '[]'),
         checkedIn: Boolean(a.checkedIn)
       }));
