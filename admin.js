@@ -232,6 +232,14 @@ async function fetchAttendeesFromDatabase() {
       }
     });
 
+    if (res.status === 401) {
+      console.error('Invalid PIN or unauthorized access.');
+      showConnectionError(false);
+      alert('Invalid Admin PIN. Please enter the correct PIN (2026 or 11011).');
+      lockBtn.click();
+      return;
+    }
+
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}: Server returned an error`);
     }
